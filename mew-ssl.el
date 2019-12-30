@@ -7,11 +7,6 @@
 
 (require 'mew)
 
-(defvar mew-ssl-type 'internal
-  "SSL implementation which Mew uses.
-internal - GnuTLS (this requires Emacs compiled with GnuTLS library)
-stunnel  - stunnel(1) utility")
-
 (defvar mew-prog-ssl "stunnel")
 (defvar mew-ssl-cert-directory "~/.certs"
   "The directory where certificates of root servers are stored.
