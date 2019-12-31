@@ -597,7 +597,13 @@ server, set an appropriate value."
 		 (string :tag "Ssh server")))
 
 (defcustom mew-smtp-ssl nil
-  "*If non-nil, SMTP connections are made over SSL/TLS."
+  "*If non-nil, SMTP connections are made over SSL/TLS.
+internal          - Use GnuTLS (this requires Emacs compiled with GnuTLS
+                    library).
+internal-starttls - As for internal, but open a plain conneciton and
+                    try to upgrade it by STARTTLS.
+tunnel            - Use an external program to establish a TLS tunnel.
+                    stunnel(1) utility is used by default."
   :group 'mew-smtp
   :type 'boolean)
 
@@ -708,7 +714,13 @@ server, set an appropriate value."
   :type '(choice string (const nil)))
 
 (defcustom mew-pop-ssl nil
-  "*If non-nil, POP connections are made over SSL/TLS."
+  "*If non-nil, POP connections are made over SSL/TLS.
+internal          - Use GnuTLS (this requires Emacs compiled with GnuTLS
+                    library).
+internal-starttls - As for internal, but open a plain conneciton and
+                    try to upgrade it by STARTTLS.
+tunnel            - Use an external program to establish a TLS tunnel.
+                    stunnel(1) utility is used by default."
   :group 'mew-pop
   :type 'boolean)
 
@@ -801,7 +813,13 @@ server, set an appropriate value."
   :type '(choice string (const nil)))
 
 (defcustom mew-imap-ssl nil
-  "*If non-nil, IMAP connections are made over SSL/TLS."
+  "*If non-nil, IMAP connections are made over SSL/TLS.
+internal          - Use GnuTLS (this requires Emacs compiled with GnuTLS
+                    library).
+internal-starttls - As for internal, but open a plain conneciton and
+                    try to upgrade it by STARTTLS.
+tunnel            - Use an external program to establish a TLS tunnel.
+                    stunnel(1) utility is used by default."
   :group 'mew-imap
   :type 'boolean)
 
@@ -918,7 +936,13 @@ server, set an appropriate value."
   :type '(choice string (const nil)))
 
 (defcustom mew-nntp-ssl nil
-  "*If non-nil, NNTP connections are made over SSL/TLS."
+  "*If non-nil, NNTP connections are made over SSL/TLS.
+internal          - Use GnuTLS (this requires Emacs compiled with GnuTLS
+                    library).
+internal-starttls - As for internal, but open a plain conneciton and
+                    try to upgrade it by STARTTLS.
+tunnel            - Use an external program to establish a TLS tunnel.
+                    stunnel(1) utility is used by default."
   :group 'mew-nntp
   :type 'boolean)
 

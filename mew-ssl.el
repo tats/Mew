@@ -7,6 +7,81 @@
 
 (require 'mew)
 
+(defun mew-ssl-internal-p (type)
+  "Return if the type is internal* or not"
+  (memq type '(internal internal-starttls)))
+(defun mew-ssl-starttls-p (type)
+  "Return if the type is starttls or not"
+  (memq type '(internal-starttls)))
+(defvar mew-ssl-internal-min-prime-bits 2048
+  "Default prime bits for GnuTLS connection.")
+(defvar mew-ssl-starttls-plist
+  '(
+    ;; RFC 3207
+    (smtp . (:capability-command
+	     (format "EHLO %s\r\n" (mew-smtp-helo-domain case))
+	     :always-query-capabilities t
+	     :end-of-command
+	     (format "^[0-9]+ .*\r")
+	     :end-of-capability
+	     (format "^[0-9]+ .*\r")
+	     :success (format "^2.*\r")
+	     :starttls-function
+	     (lambda (capabilities)
+	       (and (string-match "[ -]STARTTLS" capabilities)
+		    "STARTTLS\r\n"))))
+    ;; RFC 2595
+    (imap . (:capability-command
+	     (format "1 CAPABILITY\r\n")
+	     :always-query-capabilities t
+	     :end-of-capability
+	     (format "\r\n")
+	     :end-of-command
+	     (format "\r\n")
+	     :success
+	     (format "^1 OK ")
+	     :starttls-function
+	     (lambda (capabilities)
+	       (when (string-match-p "STARTTLS" capabilities)
+		 "1 STARTTLS\r\n"))))
+    ;; RFC 2595
+    (pop . (:capability-command
+	    (format "CAPA\r\n")
+	    :always-query-capabilities nil
+	    :end-of-capability
+	    (format "^\\.\r?\n\\|^-ERR")
+	    :end-of-command
+	    (format "^\\(-ERR\\|+OK\\).*\n")
+	    :success
+	    (format "^\\+OK.*\n")
+	    :starttls-function
+	    (lambda (capabilities)
+	      (and (string-match "\\bSTLS\\b" capabilities)
+		   "STLS\r\n"))))
+    ;; RFC 4642
+    (nntp . (:capability-command
+	     (format "CAPABILITIES\r\n")
+	     :always-query-capabilities t
+	     :end-of-capability
+	     (format "^.\r")
+	     :end-of-command
+	     (format "^.\r")
+	     :success
+	     (format "^2.+ \r")
+	     :starttls-function
+	     (lambda (capabilities)
+	       (when (string-match-p "STARTTLS" capabilities)
+		   "STARTTLS\r\n"))))
+    ))
+(defun mew-starttls-get-param (proto key evalp)
+  "Get parameter from mew-ssl-starttls-plist"
+  (let ((p (plist-get (cdr (assq proto mew-ssl-starttls-plist)) key)))
+    (if evalp (eval p) p)))
+
+(defvar mew-ssl-internal-client-keycert-list nil
+  "The client-side certificate used for TLS connection.
+'((\"keyfile\" \"certfile\")) - A list of key/cert pairs.")
+
 (defvar mew-prog-ssl "stunnel")
 (defvar mew-ssl-cert-directory "~/.certs"
   "The directory where certificates of root servers are stored.
