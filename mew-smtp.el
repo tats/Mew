@@ -386,25 +386,109 @@
 
 (defvar mew-smtp-submission-family 'ipv4)
 
+;;; XXX: (mew-open-network-stream) alreays returns a list
+;;       and is also used for non-SMTP protocols.
 (if (fboundp 'make-network-process)
-    (defun mew-open-network-stream (name buf server port)
-      (let (family nowait pro)
-	(when mew-inherit-submission
+    (defun mew-open-network-stream (name buf server port proto sslip starttlsp)
+      (let (family nowait pro tlsparams)
+	;; SMTP-specific
+	(when (and (eq proto 'smtp) mew-inherit-submission)
 	  (setq family mew-smtp-submission-family)
 	  (setq nowait t))
-	(when (and (stringp port) (string-match "^/" port))
+	;; TLS does not work for Unix-domain socket
+	(when (and (not sslip)
+		   (stringp port) (string-match "^/" port))
 	  (setq family 'local)
 	  (setq server 'local))
-	(setq pro (make-network-process :name name :buffer buf
-					:host server :service port
-					:family family :nowait nowait))
-	(if nowait
+	;; GnuTLS-specific
+	(cond
+	 ((and sslip (not starttlsp))
+	  (let ((hostname (puny-encode-domain server))
+		;; XXX: do not use gnutls-trustfiles because
+		;; the precompiled file list is different from it.
+		(trustfiles nil)
+		(verror t))
+	    (cond
+	     ((eq mew-ssl-verify-level 0) ;; ignore verror
+	      (setq verror nil))
+	     ((eq mew-ssl-verify-level 1) ;; trust w/o server cert
+	      (setq trustfiles '("/dev/null")))
+	     ((eq mew-ssl-verify-level 2) ;; trust w/ server cert
+	      (setq trustfiles '("/dev/null")))
+	     (t                            ;; verify w/ trustfiles
+	      (setq verror t)))
+	    (if (and (fboundp 'gnutls-available-p)
+		     (gnutls-available-p))
+		(progn
+		  (setq tlsparams
+			(cons 'gnutls-x509pki
+			      (gnutls-boot-parameters
+			       :type 'gnutls-x509pki
+			       :keylist mew-ssl-internal-client-keycert-list
+			       :trustfiles trustfiles
+			       :min-prime-bits mew-ssl-internal-min-prime-bits
+			       :verify-error verror
+			       :hostname hostname)))
+		  ;; debug output: TLS params
+		  (when (mew-debug 'net)
+		    (with-current-buffer (get-buffer-create mew-buffer-debug)
+		      (goto-char (point-max))
+		      (insert
+		       (format "\n<%s>\n%s\n"
+			       (format "TLS server=%s:%s" hostname port)
+			       (format "nowait=%s, tlsparams=%s"
+				       nowait
+				       (mapconcat 'identity
+						  (mapcar (lambda (a) (format "%s" a))
+							  (cdr tlsparams)) " "))))))
+		  (message "Creating SSL/TLS connection (GnuTLS)...")
+		  (setq pro
+			(list (make-network-process :name name :buffer buf
+						    :host hostname :service port
+						    :family family :nowait nowait
+						    :tls-parameters tlsparams)
+			      nil
+			      nil
+			      'tls)))
+	      (progn
+		(setq pro nil)
+		(message "Creating SSL/TLS connection (GnuTLS)...FAILED (GnuTLS not available)")))))
+	 (starttlsp
+	  (message "Creating SSL/TLS connection (GnuTLS, STARTTLS)...")
+	  (setq pro (open-network-stream
+		     name buf server port
+		     :type 'starttls
+		     :return-list t
+		     :nowait nowait
+		     :always-query-capabilities
+		     (mew-starttls-get-param proto :always-query-capabilities nil)
+		     :capability-command
+		     (mew-starttls-get-param proto :capability-command t)
+		     :end-of-capability
+		     (mew-starttls-get-param proto :end-of-capability t)
+		     :end-of-command
+		     (mew-starttls-get-param proto :end-of-command t)
+		     :success
+		     (mew-starttls-get-param proto :success t)
+		     :starttls-function
+		     (mew-starttls-get-param proto :starttls-function nil))))
+	 (t
+	  (setq pro (list (make-network-process :name name :buffer buf
+						:host server :service port
+						:family family :nowait nowait)
+			  nil
+			  nil
+			  'plain))))
+	(if (and (eq proto 'smtp) nowait)
 	    (run-at-time mew-smtp-submission-timeout nil 'mew-smtp-submission-timeout pro))
 	pro))
-  (defalias 'mew-open-network-stream 'open-network-stream))
+  (defun mew-open-network-stream (name buf server port proto sslip starttlsp)
+    (open-network-stream name buf server port :return-list t)))
 
-(defun mew-smtp-open (pnm server port)
+(defun mew-smtp-open (pnm case server port)
   (let ((sprt (mew-*-to-port port))
+	(sslip (mew-ssl-internal-p (mew-smtp-ssl case)))
+	(starttlsp (mew-ssl-starttls-p (mew-smtp-ssl case)))
 	pro tm)
     ;; xxx some OSes do not define "submission", sigh.
     (when (and (stringp sprt) (string= sprt "submission"))
@@ -413,7 +497,14 @@
 	(progn
 	  (setq tm (run-at-time mew-smtp-timeout-time nil 'mew-smtp-timeout))
 	  (message "Connecting to the SMTP server...")
-	  (setq pro (mew-open-network-stream pnm nil server sprt))
+	  (setq pro (mew-open-network-stream pnm nil server sprt
+					     'smtp sslip starttlsp))
+	  (when starttlsp
+	    (mew-smtp-debug "*GREETING*"
+			    (plist-get (cdr pro) :greeting))
+	    (mew-smtp-debug "*CAPABILITIES*"
+			    (plist-get (cdr pro) :capabilities)))
+	  (setq pro (car pro))
 	  (mew-process-silent-exit pro)
 	  (mew-set-process-cs pro mew-cs-text-for-net mew-cs-text-for-net)
 	  (message "Connecting to the SMTP server...done"))
@@ -427,6 +518,8 @@
     pro))
 
 (defun mew-smtp-timeout ()
+  (message (format "SMTP connection timed out (%d seconds)"
+		   mew-smtp-timeout-time))
   (signal 'quit nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -441,23 +534,29 @@
 	(pnm (mew-smtp-info-name case fallbacked))
 	(sshsrv (mew-smtp-ssh-server case))
 	(sslp (mew-smtp-ssl case))
+	(sslip (mew-ssl-internal-p (mew-smtp-ssl case)))
+	(starttlsp (mew-ssl-starttls-p (mew-smtp-ssl case)))
 	(sslport (mew-smtp-ssl-port case))
 	mew-inherit-submission
 	process sshname sshpro sslname sslpro lport tlsp tls fallback)
-    (when (and sslp (mew-port-equal port sslport))
+    (cond
+     (starttlsp ;; internal-starttls
+      (setq tlsp nil)
+      (setq tls nil))
+     ((and sslp (not sslip) '(mew-port-equal port sslport))
       (setq tlsp t)
       ;; let stunnel know that a wrapper protocol is SMTP
-      (setq tls mew-tls-smtp))
+      (setq tls mew-tls-smtp)))
     ;; a fallback: "submission" -> "smtp"
     ;; mew-smtp-port is "smtp" and mew-use-submission is t on Emacs 22
-    (when (and (or (not sslp) tlsp)
+    (when (and (or (not sslp) starttlsp tlsp)
 	       (not fallbacked)
 	       mew-use-submission
 	       (fboundp 'make-network-process) ;; Emacs 22 or later
 	       (mew-port-equal port "smtp"))
       (setq port "submission")
       (setq fallback t)
-      (unless tlsp
+      (when (and sslp (not sslip) (not tlsp))
 	;; TLS uses stunnel. So, we should not use non-blocking connect.
 	;; Timeout should be carried out by stunnel.
 	(setq mew-inherit-submission t))
@@ -469,24 +568,29 @@
 	(setq sshname (process-name sshpro))
 	(setq lport (mew-ssh-pnm-to-lport sshname))
 	(when lport
-	  (setq process (mew-smtp-open pnm "localhost" lport)))))
+	  (setq process (mew-smtp-open pnm case "localhost" lport)))))
+     (sslip
+      (setq process (mew-smtp-open pnm case server port)))
      (sslp
       (setq sslpro (mew-open-ssl-stream case server sslport tls))
       (when sslpro
 	(setq sslname (process-name sslpro))
 	(setq lport (mew-ssl-pnm-to-lport sslname))
 	(when lport
-	  (setq process (mew-smtp-open pnm mew-ssl-localhost lport)))))
+	  (setq process (mew-smtp-open pnm case mew-ssl-localhost lport)))))
      (t
-      (setq process (mew-smtp-open pnm server port))))
+      (setq process (mew-smtp-open pnm case server port))))
     (if (null process)
 	(cond
 	 ((and sshsrv (null sshpro))
 	  (message "Cannot create to the SSH connection"))
+	 (sslip
+	  (message "Cannot create to the SSL/TLS (GnuTLS) connection"))
 	 ((and sslp (null sslpro))
 	  (message "Cannot create to the SSL/TLS connection"))
 	 (t
-	  (if (and (or (not sslp) tlsp)
+	  (if (and (not (eq server 'local))
+	           (or (not sslp) tlsp)
 		   (not fallbacked)
 		   mew-use-submission
 		   (fboundp 'make-network-process)
@@ -511,13 +615,26 @@
       (mew-smtp-set-user pnm user)
       (mew-smtp-set-auth-user pnm (mew-smtp-user case))
       (mew-smtp-set-auth-list pnm (mew-smtp-auth-list case))
-      (mew-smtp-set-status pnm "greeting")
+      (cond
+       ;; STARTTLS requires capability-command after the session is
+       ;; upgraded to use TLS.
+       (starttlsp (mew-smtp-set-status pnm "ehlo"))
+       (t         (mew-smtp-set-status pnm "greeting")))
       (mew-smtp-set-fallback pnm fallback)
       ;;
       (set-process-buffer process nil)
       (set-process-sentinel process 'mew-smtp-sentinel)
       (set-process-filter process 'mew-smtp-filter)
-      (message "Sending in background..."))))
+      (message "Sending in background...")
+      ;;
+      (when starttlsp
+	;; STARTTLS requires capability-command after the session is
+	;; upgraded to use TLS.
+	(mew-smtp-process-send-string
+	 process
+	 (mew-starttls-get-param 'smtp
+				 :capability-command t)))
+      )))
 
 (defun mew-smtp-flush-queue (case &optional qfld)
   (let (msgs)

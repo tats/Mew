@@ -177,14 +177,18 @@
 ;;; Opening NNTP
 ;;;
 
-(defun mew-nntp2-open (pnm server port)
+(defun mew-nntp2-open (pnm case server port)
   (let ((sprt (mew-*-to-port port))
+	(sslip (mew-ssl-internal-p (mew-nntp-ssl case)))
+	(starttlsp (mew-ssl-starttls-p (mew-nntp-ssl case)))
 	pro tm)
     (condition-case emsg
 	(progn
 	  (setq tm (run-at-time mew-nntp-timeout-time nil 'mew-nntp2-timeout))
 	  (message "Connecting to the NNTP server...")
-	  (setq pro (open-network-stream pnm nil server sprt))
+	  (setq pro (mew-open-network-stream pnm nil server sprt
+					     'nntp sslip starttlsp))
+	  (setq pro (car pro))
 	  (mew-process-silent-exit pro)
 	  (mew-set-process-cs pro mew-cs-text-for-net mew-cs-text-for-net)
 	  (message "Connecting to the NNTP server...done"))
@@ -198,6 +202,8 @@
     pro))
 
 (defun mew-nntp2-timeout ()
+  (message (format "NNTP connection timed out (%d seconds)"
+		   mew-nntp-timeout-time))
   (signal 'quit nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -212,6 +218,8 @@
 	(pnm (mew-nntp2-info-name case))
 	(sshsrv (mew-nntp-ssh-server case))
 	(sslp (mew-nntp-ssl case))
+	(sslip (mew-ssl-internal-p (mew-nntp-ssl case)))
+	(starttlsp (mew-ssl-starttls-p (mew-nntp-ssl case)))
 	(sslport (mew-nntp-ssl-port case))
 	process sshname sshpro sslname sslpro lport tls)
     (cond
@@ -221,7 +229,9 @@
 	(setq sshname (process-name sshpro))
 	(setq lport (mew-ssh-pnm-to-lport sshname))
 	(when lport
-	  (setq process (mew-nntp2-open pnm "localhost" lport)))))
+	  (setq process (mew-nntp2-open pnm case "localhost" lport)))))
+     (sslip
+      (setq process (mew-nntp2-open pnm case server port)))
      (sslp
       (if (mew-port-equal port sslport) (setq tls mew-tls-nntp))
       (setq sslpro (mew-open-ssl-stream case server sslport tls))
@@ -229,9 +239,9 @@
 	(setq sslname (process-name sslpro))
 	(setq lport (mew-ssl-pnm-to-lport sslname))
 	(when lport
-	  (setq process (mew-nntp2-open pnm mew-ssl-localhost lport)))))
+	  (setq process (mew-nntp2-open pnm case mew-ssl-localhost lport)))))
      (t
-      (setq process (mew-nntp2-open pnm server port))))
+      (setq process (mew-nntp2-open pnm case server port))))
     (if (null process)
 	(cond
 	 ((and sshsrv (null sshpro))
@@ -251,13 +261,24 @@
       (mew-nntp2-set-ssl-process pnm sslpro)
       (mew-nntp2-set-user pnm user)
       (mew-nntp2-set-account pnm (format "%s@%s" user server))
-      (mew-nntp2-set-status pnm "greeting")
+      (cond
+       ;; STARTTLS requires capability-command after the session is
+       ;; upgraded to use TLS.
+       (starttlsp (mew-nntp-set-status pnm "mode-reader"))
+       (t         (mew-nntp-set-status pnm "greeting")))
       ;;
       (set-process-buffer process nil)
       (set-process-sentinel process 'mew-nntp2-sentinel)
       (set-process-filter process 'mew-nntp2-filter)
-      (message "Posting in background..."))))
-
+      (message "Posting in background...")
+      (when starttlsp
+	;; STARTTLS requires capability-command after the session is
+	;; upgraded to use TLS.
+	(mew-nntp-process-send-string
+	 process
+	 (mew-starttls-get-param 'nntp
+				 :capability-command t)))
+      )))
 (defun mew-nntp2-flush-queue (case &optional qfld)
   (let (msgs)
     (unless qfld (setq qfld (mew-postq-folder case)))

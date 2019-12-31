@@ -388,14 +388,18 @@
 ;;; Opening NNTP
 ;;;
 
-(defun mew-nntp-open (pnm server port no-msg)
+(defun mew-nntp-open (pnm case server port no-msg)
   (let ((sprt (mew-*-to-port port))
+	(sslip (mew-ssl-internal-p (mew-nntp-ssl case)))
+	(starttlsp (mew-ssl-starttls-p (mew-nntp-ssl case)))
 	pro tm)
     (condition-case emsg
 	(progn
 	  (setq tm (run-at-time mew-nntp-timeout-time nil 'mew-nntp-timeout))
 	  (or no-msg (message "Connecting to the NNTP server..."))
-	  (setq pro (open-network-stream pnm nil server sprt))
+	  (setq pro (mew-open-network-stream pnm nil server sprt
+					     'nntp sslip starttlsp))
+	  (setq pro (car pro))
 	  (mew-process-silent-exit pro)
 	  (mew-set-process-cs pro mew-cs-text-for-net mew-cs-text-for-net)
 	  (or no-msg (message "Connecting to the NNTP server...done")))
@@ -409,6 +413,8 @@
     pro))
 
 (defun mew-nntp-timeout ()
+  (message (format "NNTP connection timed out (%d seconds)"
+		   mew-nntp-timeout-time))
   (signal 'quit nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -422,6 +428,8 @@
 	 (port (mew-*-to-string (mew-nntp-port case)))
 	 (sshsrv (mew-nntp-ssh-server case))
 	 (sslp (mew-nntp-ssl case))
+	 (sslip (mew-ssl-internal-p (mew-nntp-ssl case)))
+	 (starttlsp (mew-ssl-starttls-p (mew-nntp-ssl case)))
 	 (sslport (mew-nntp-ssl-port case))
 	 (newsgroup (mew-bnm-to-newsgroup bnm))
 	 (pnm (mew-nntp-info-name case newsgroup))
@@ -438,7 +446,9 @@
 	  (setq sshname (process-name sshpro))
 	  (setq lport (mew-ssh-pnm-to-lport sshname))
 	  (when lport
-	    (setq process (mew-nntp-open pnm "localhost" lport no-msg)))))
+	    (setq process (mew-nntp-open pnm case "localhost" lport no-msg)))))
+       (sslip
+	(setq process (mew-nntp-open pnm case server port no-msg)))
        (sslp
 	(if (mew-port-equal port sslport) (setq tls mew-tls-nntp))
 	(setq sslpro (mew-open-ssl-stream case server sslport tls))
@@ -446,9 +456,9 @@
 	  (setq sslname (process-name sslpro))
 	  (setq lport (mew-ssl-pnm-to-lport sslname))
 	  (when lport
-	    (setq process (mew-nntp-open pnm mew-ssl-localhost lport no-msg)))))
+	    (setq process (mew-nntp-open pnm case mew-ssl-localhost lport no-msg)))))
        (t
-	(setq process (mew-nntp-open pnm server port no-msg))))
+	(setq process (mew-nntp-open pnm case server port no-msg))))
       (when process
 	(mew-summary-lock process "NNTPing" (or sshpro sslpro))
 	(mew-sinfo-set-summary-form (mew-get-summary-form bnm))
@@ -466,7 +476,11 @@
 	(mew-nntp-set-port pnm port)
 	(mew-nntp-set-user pnm user)
         (mew-nntp-set-account pnm (format "%s@%s" user server))
-	(mew-nntp-set-status pnm "greeting")
+	(cond
+	 ;; STARTTLS requires capability-command after the session is
+	 ;; upgraded to use TLS.
+	 (starttlsp (mew-nntp-set-status pnm "mode-reader"))
+	 (t         (mew-nntp-set-status pnm "greeting")))
 	(mew-nntp-set-directive pnm directive)
 	(mew-nntp-set-bnm pnm bnm)
 	(mew-nntp-set-status-buf pnm bnm)
@@ -502,7 +516,15 @@
 	(mew-sinfo-set-start-point (point)) ;; after erase-buffer
 	(set-process-sentinel process 'mew-nntp-sentinel)
 	(set-process-filter process 'mew-nntp-filter)
-	(set-process-buffer process buf)))))
+	(set-process-buffer process buf)
+	(when starttlsp
+	  ;; STARTTLS requires capability-command after the session is
+	  ;; upgraded to use TLS.
+	  (mew-nntp-process-send-string
+	   process
+	   (mew-starttls-get-param 'nntp
+				   :capability-command t)))
+	))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
