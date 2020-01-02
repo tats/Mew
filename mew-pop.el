@@ -612,7 +612,7 @@
 
 (defun mew-pop-open (pnm case server port no-msg)
   (let ((sprt (mew-*-to-port port))
-	(sslip (mew-ssl-internal-p (mew-pop-ssl case)))
+	(sslnp (mew-ssl-native-p (mew-pop-ssl case)))
 	(starttlsp (mew-ssl-starttls-p (mew-pop-ssl case)))
 	pro tm)
     (condition-case emsg
@@ -620,7 +620,7 @@
 	  (setq tm (run-at-time mew-pop-timeout-time nil 'mew-pop-timeout))
 	  (or no-msg (message "Connecting to the POP server..."))
 	  (setq pro (mew-open-network-stream pnm nil server sprt
-					     'pop sslip starttlsp))
+					     'pop sslnp starttlsp))
 	  (setq pro (car pro))
 	  (mew-process-silent-exit pro)
 	  (mew-set-process-cs pro mew-cs-text-for-net mew-cs-text-for-net)
@@ -649,7 +649,7 @@
 	 (port (mew-*-to-string (mew-pop-port case)))
 	 (sshsrv (mew-pop-ssh-server case))
 	 (sslp (mew-pop-ssl case))
-	 (sslip (mew-ssl-internal-p (mew-pop-ssl case)))
+	 (sslnp (mew-ssl-native-p (mew-pop-ssl case)))
 	 (starttlsp (mew-ssl-starttls-p (mew-pop-ssl case)))
 	 (sslport (mew-pop-ssl-port case))
          (proxysrv (mew-pop-proxy-server case))
@@ -669,7 +669,7 @@
 	  (setq lport (mew-ssh-pnm-to-lport sshname))
 	  (when lport
 	    (setq process (mew-pop-open pnm case "localhost" lport no-msg)))))
-       (sslip
+       (sslnp
 	(setq process (mew-pop-open pnm case server port no-msg)))
        (sslp
 	(if (mew-port-equal port sslport) (setq tls mew-tls-pop))

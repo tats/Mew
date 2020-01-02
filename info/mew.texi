@@ -11427,9 +11427,12 @@ POP サーバの名前。
 @item mew-pop-ssh-server
 POP を SSH 経由で取得する場合の SSH サーバの名前。
 @item mew-pop-ssl
-POP over SSL を使うか否か。
+POP over SSL を使うか否か。@samp{'native} は GnuTLS
+を使った TLS/SSL 接続、@samp{'native-starttls} は GnuTLS
+を使った STARTTLS 接続、@samp{'tunnel} は stunnel
+を使った TLS/SSL トンネル接続を意味する。
 @item mew-pop-ssl-port
-POP over SSL のポート番号。
+POP overSSL のポート番号。
 @item mew-pop-user
 POP のアカウント名。初期値はログイン名。
 @item mew-pop-auth
@@ -11462,6 +11465,9 @@ The name of your POP server.
 The name of SSH server which forwards the POP3 port.
 @item mew-pop-ssl
 If non-nil, POP connections are made over SSL.
+@samp{'native} enables GnuTLS for native TLS connection,
+@samp{'native-starttls} enables GnuTLS for STARTTLS connection,
+and @samp{'tunnel} uses stunnel to establish a TLS tunnel.
 @item mew-pop-ssl-port
 The port for POP over SSL.
 @item mew-pop-user
@@ -11518,7 +11524,10 @@ IMAP サーバの名前。
 @item mew-imap-ssh-server
 IMAP を SSH 経由で取得する場合の SSH サーバの名前。
 @item mew-imap-ssl
-IMAP over SSL を使うか否か。
+IMAP over SSL を使うか否か。@samp{'native} は GnuTLS
+を使った TLS/SSL 接続、@samp{'native-starttls} は GnuTLS
+を使った STARTTLS 接続、@samp{'tunnel} は stunnel
+を使った TLS/SSL トンネル接続を意味する。
 @item mew-imap-ssl-port
 IMAP over SSL のポート番号。
 @item mew-imap-user
@@ -11549,6 +11558,9 @@ The name of your IMAP server.
 The name of SSH server which forwards the IMAP4 port.
 @item mew-imap-ssl
 If non-nil, IMAP connections are made over SSL.
+@samp{'native} enables GnuTLS for native TLS connection,
+@samp{'native-starttls} enables GnuTLS for STARTTLS connection,
+and @samp{'tunnel} uses stunnel to establish a TLS tunnel.
 @item mew-imap-ssl-port
 The port for IMAP over SSL.
 @item mew-imap-user
@@ -11601,7 +11613,10 @@ NNTP サーバの名前。
 @item mew-nntp-ssh-server
 NNTP を SSH 経由で取得する場合の SSH サーバの名前。
 @item mew-nntp-ssl
-NNTP over SSL を使うか否か。
+NNTP over SSL を使うか否か。@samp{'native} は GnuTLS
+を使った TLS/SSL 接続、@samp{'native-starttls} は GnuTLS
+を使った STARTTLS 接続、@samp{'tunnel} は stunnel
+を使った TLS/SSL トンネル接続を意味する。
 @item mew-nntp-ssl-port
 NNTP over SSL のポート番号。
 @item mew-nntp-user
@@ -11633,6 +11648,9 @@ The name of your NNTP server.
 The name of SSH server which forwards the NNTP port.
 @item mew-nntp-ssl
 If non-nil, NNTP connections are made over SSL.
+@samp{'native} enables GnuTLS for native TLS connection,
+@samp{'native-starttls} enables GnuTLS for STARTTLS connection,
+and @samp{'tunnel} uses stunnel to establish a TLS tunnel.
 @item mew-nntp-ssl-port
 The port for NNTP over SSL.
 @item mew-nntp-user
@@ -11699,7 +11717,10 @@ SMTP サーバと接続する際に用いるアドレスファミリ。初期値
 @item mew-smtp-ssh-server
 SSH 経由でメッセージを送る際の SSH サーバの名前。
 @item mew-smtp-ssl
-SMTP over SSL を使うか否か。
+SMTP over SSL を使うか否か。@samp{'native} は GnuTLS
+を使った TLS/SSL 接続、@samp{'native-starttls} は GnuTLS
+を使った STARTTLS 接続、@samp{'tunnel} は stunnel
+を使った TLS/SSL トンネル接続を意味する。
 @item mew-smtp-ssl-port
 SMTP over SSL のポート番号。
 @item mew-smtp-user
@@ -11739,6 +11760,9 @@ The name of SSH server which forwards the SMTP port.
 If non-nil, SMTP connections are made over SSL.
 @item mew-smtp-ssl-port
 The port for SMTP over SSL.
+@samp{'native} enables GnuTLS for native TLS connection,
+@samp{'native-starttls} enables GnuTLS for STARTTLS connection,
+and @samp{'tunnel} uses stunnel to establish a TLS tunnel.
 @item mew-smtp-user
 The user name on your SMTP server. If not configured, your e-mail
 address is automatically set.

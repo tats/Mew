@@ -389,20 +389,20 @@
 ;;; XXX: (mew-open-network-stream) alreays returns a list
 ;;       and is also used for non-SMTP protocols.
 (if (fboundp 'make-network-process)
-    (defun mew-open-network-stream (name buf server port proto sslip starttlsp)
+    (defun mew-open-network-stream (name buf server port proto sslnp starttlsp)
       (let (family nowait pro tlsparams)
 	;; SMTP-specific
 	(when (and (eq proto 'smtp) mew-inherit-submission)
 	  (setq family mew-smtp-submission-family)
 	  (setq nowait t))
 	;; TLS does not work for Unix-domain socket
-	(when (and (not sslip)
+	(when (and (not sslnp)
 		   (stringp port) (string-match "^/" port))
 	  (setq family 'local)
 	  (setq server 'local))
 	;; GnuTLS-specific
 	(cond
-	 ((and sslip (not starttlsp))
+	 ((and sslnp (not starttlsp))
 	  (let ((hostname (puny-encode-domain server))
 		;; XXX: do not use gnutls-trustfiles because
 		;; the precompiled file list is different from it.
@@ -424,9 +424,9 @@
 			(cons 'gnutls-x509pki
 			      (gnutls-boot-parameters
 			       :type 'gnutls-x509pki
-			       :keylist mew-ssl-internal-client-keycert-list
+			       :keylist mew-ssl-native-client-keycert-list
 			       :trustfiles trustfiles
-			       :min-prime-bits mew-ssl-internal-min-prime-bits
+			       :min-prime-bits mew-ssl-native-min-prime-bits
 			       :verify-error verror
 			       :hostname hostname)))
 		  ;; debug output: TLS params
@@ -482,12 +482,12 @@
 	(if (and (eq proto 'smtp) nowait)
 	    (run-at-time mew-smtp-submission-timeout nil 'mew-smtp-submission-timeout pro))
 	pro))
-  (defun mew-open-network-stream (name buf server port proto sslip starttlsp)
+  (defun mew-open-network-stream (name buf server port proto sslnp starttlsp)
     (open-network-stream name buf server port :return-list t)))
 
 (defun mew-smtp-open (pnm case server port)
   (let ((sprt (mew-*-to-port port))
-	(sslip (mew-ssl-internal-p (mew-smtp-ssl case)))
+	(sslnp (mew-ssl-native-p (mew-smtp-ssl case)))
 	(starttlsp (mew-ssl-starttls-p (mew-smtp-ssl case)))
 	pro tm)
     ;; xxx some OSes do not define "submission", sigh.
@@ -498,7 +498,7 @@
 	  (setq tm (run-at-time mew-smtp-timeout-time nil 'mew-smtp-timeout))
 	  (message "Connecting to the SMTP server...")
 	  (setq pro (mew-open-network-stream pnm nil server sprt
-					     'smtp sslip starttlsp))
+					     'smtp sslnp starttlsp))
 	  (when starttlsp
 	    (mew-smtp-debug "*GREETING*"
 			    (plist-get (cdr pro) :greeting))
@@ -534,16 +534,16 @@
 	(pnm (mew-smtp-info-name case fallbacked))
 	(sshsrv (mew-smtp-ssh-server case))
 	(sslp (mew-smtp-ssl case))
-	(sslip (mew-ssl-internal-p (mew-smtp-ssl case)))
+	(sslnp (mew-ssl-native-p (mew-smtp-ssl case)))
 	(starttlsp (mew-ssl-starttls-p (mew-smtp-ssl case)))
 	(sslport (mew-*-to-string (mew-smtp-ssl-port case)))
 	mew-inherit-submission
 	process sshname sshpro sslname sslpro lport tlsp tls fallback)
     (cond
-     (starttlsp ;; internal-starttls
+     (starttlsp ;; native-starttls
       (setq tlsp nil)
       (setq tls nil))
-     ((and sslp (not sslip) '(mew-port-equal port sslport))
+     ((and sslp (not sslnp) '(mew-port-equal port sslport))
       (setq tlsp t)
       ;; let stunnel know that a wrapper protocol is SMTP
       (setq tls mew-tls-smtp)))
@@ -556,7 +556,7 @@
 	       (mew-port-equal port "smtp"))
       (setq port "submission")
       (setq fallback t)
-      (when (and sslp (not sslip) (not tlsp))
+      (when (and sslp (not sslnp) (not tlsp))
 	;; TLS uses stunnel. So, we should not use non-blocking connect.
 	;; Timeout should be carried out by stunnel.
 	(setq mew-inherit-submission t))
@@ -569,7 +569,7 @@
 	(setq lport (mew-ssh-pnm-to-lport sshname))
 	(when lport
 	  (setq process (mew-smtp-open pnm case "localhost" lport)))))
-     (sslip
+     (sslnp
       (setq process (mew-smtp-open pnm case server port)))
      (sslp
       (setq sslpro (mew-open-ssl-stream case server sslport tls))
@@ -584,7 +584,7 @@
 	(cond
 	 ((and sshsrv (null sshpro))
 	  (message "Cannot create to the SSH connection"))
-	 (sslip
+	 (sslnp
 	  (message "Cannot create to the SSL/TLS (GnuTLS) connection"))
 	 ((and sslp (null sslpro))
 	  (message "Cannot create to the SSL/TLS connection"))
