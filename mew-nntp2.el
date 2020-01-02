@@ -179,7 +179,7 @@
 
 (defun mew-nntp2-open (pnm case server port)
   (let ((sprt (mew-*-to-port port))
-	(sslip (mew-ssl-internal-p (mew-nntp-ssl case)))
+	(sslnp (mew-ssl-native-p (mew-nntp-ssl case)))
 	(starttlsp (mew-ssl-starttls-p (mew-nntp-ssl case)))
 	pro tm)
     (condition-case emsg
@@ -187,7 +187,7 @@
 	  (setq tm (run-at-time mew-nntp-timeout-time nil 'mew-nntp2-timeout))
 	  (message "Connecting to the NNTP server...")
 	  (setq pro (mew-open-network-stream pnm nil server sprt
-					     'nntp sslip starttlsp))
+					     'nntp sslnp starttlsp))
 	  (setq pro (car pro))
 	  (mew-process-silent-exit pro)
 	  (mew-set-process-cs pro mew-cs-text-for-net mew-cs-text-for-net)
@@ -218,7 +218,7 @@
 	(pnm (mew-nntp2-info-name case))
 	(sshsrv (mew-nntp-ssh-server case))
 	(sslp (mew-nntp-ssl case))
-	(sslip (mew-ssl-internal-p (mew-nntp-ssl case)))
+	(sslnp (mew-ssl-native-p (mew-nntp-ssl case)))
 	(starttlsp (mew-ssl-starttls-p (mew-nntp-ssl case)))
 	(sslport (mew-nntp-ssl-port case))
 	process sshname sshpro sslname sslpro lport tls)
@@ -230,7 +230,7 @@
 	(setq lport (mew-ssh-pnm-to-lport sshname))
 	(when lport
 	  (setq process (mew-nntp2-open pnm case "localhost" lport)))))
-     (sslip
+     (sslnp
       (setq process (mew-nntp2-open pnm case server port)))
      (sslp
       (if (mew-port-equal port sslport) (setq tls mew-tls-nntp))

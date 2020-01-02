@@ -7,15 +7,15 @@
 
 (require 'mew)
 
-(defun mew-ssl-internal-p (type)
-  "Return if the type is internal* or not"
-  (memq type '(internal internal-starttls)))
+(defun mew-ssl-native-p (type)
+  "Return if the type is native* or not"
+  (memq type '(native native-starttls)))
 (defun mew-ssl-starttls-p (type)
   "Return if the type is starttls or not"
-  (memq type '(internal-starttls)))
-(defvar mew-ssl-internal-min-prime-bits 2048
+  (memq type '(native-starttls)))
+(defvar mew-ssl-native-min-prime-bits 2048
   "Default prime bits for GnuTLS connection.")
-(defvar mew-ssl-starttls-plist
+(defvar mew-ssl-native-starttls-plist
   '(
     ;; RFC 3207
     (smtp . (:capability-command
@@ -74,11 +74,11 @@
 		   "STARTTLS\r\n"))))
     ))
 (defun mew-starttls-get-param (proto key evalp)
-  "Get parameter from mew-ssl-starttls-plist"
-  (let ((p (plist-get (cdr (assq proto mew-ssl-starttls-plist)) key)))
+  "Get parameter from mew-ssl-native-starttls-plist"
+  (let ((p (plist-get (cdr (assq proto mew-ssl-native-starttls-plist)) key)))
     (if evalp (eval p) p)))
 
-(defvar mew-ssl-internal-client-keycert-list nil
+(defvar mew-ssl-native-client-keycert-list nil
   "The client-side certificate used for TLS connection.
 '((\"keyfile\" \"certfile\")) - A list of key/cert pairs.")
 
