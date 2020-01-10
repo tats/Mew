@@ -450,11 +450,7 @@
       (mew-imap2-set-account pnm (format "%s@%s" user server))
       (mew-imap2-set-auth pnm (mew-imap-auth case))
       (mew-imap2-set-auth-list pnm (mew-imap-auth-list case))
-      ;; STARTTLS requires capability-command after the session is
-      ;; upgraded to use TLS.
-      (cond
-       (starttlsp (mew-imap2-set-status pnm "capability"))
-       (t         (mew-imap2-set-status pnm "greeting")))
+      (mew-imap2-set-status pnm "greeting")
       (mew-imap2-set-src-list pnm src-list)
       (mew-imap2-set-src-list-orig pnm src-list)
       (mew-imap2-set-mailbox pnm dst)
@@ -466,10 +462,8 @@
       (when starttlsp
 	;; STARTTLS requires capability-command after the session is
 	;; upgraded to use TLS.
-	(mew-imap-process-send-string
-	 process pnm (mew-starttls-get-param
-		      'imap
-		      :capability-command t)))
+	(mew-imap2-set-status pnm "capability")
+	(mew-imap2-command-capability process pnm))
       )))
 
 (defun mew-summary-from-local-to-imap ()

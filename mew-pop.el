@@ -704,11 +704,6 @@
         (mew-pop-set-account pnm (format "%s@%s" user server))
 	(mew-pop-set-auth pnm (mew-pop-auth case))
 	(mew-pop-set-auth-list pnm (mew-pop-auth-list case))
-	(cond
-	 ;; STARTTLS requires capability-command after the session is
-	 ;; upgraded to use TLS.
-	 (starttlsp (mew-pop-set-status pnm "capa"))
-	 (t         (mew-pop-set-status pnm "greeting")))
 	(mew-pop-set-status pnm "greeting")
 	(mew-pop-set-directive pnm directive)
 	(mew-pop-set-bnm pnm bnm)
@@ -760,11 +755,7 @@
 	(when starttlsp
 	  ;; STARTTLS requires capability-command after the session is
 	  ;; upgraded to use TLS.
-	  (let ((comm (mew-starttls-get-param
-		       'pop
-		       :capability-command t)))
-	    (mew-pop-debug "=SEND=" comm)
-	    (process-send-string process comm)))
+	  (mew-pop-command-capa process pnm))
 	))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
