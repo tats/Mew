@@ -261,11 +261,7 @@
       (mew-nntp2-set-ssl-process pnm sslpro)
       (mew-nntp2-set-user pnm user)
       (mew-nntp2-set-account pnm (format "%s@%s" user server))
-      (cond
-       ;; STARTTLS requires capability-command after the session is
-       ;; upgraded to use TLS.
-       (starttlsp (mew-nntp-set-status pnm "mode-reader"))
-       (t         (mew-nntp-set-status pnm "greeting")))
+      (mew-nntp-set-status pnm "greeting")
       ;;
       (set-process-buffer process nil)
       (set-process-sentinel process 'mew-nntp2-sentinel)
@@ -274,10 +270,7 @@
       (when starttlsp
 	;; STARTTLS requires capability-command after the session is
 	;; upgraded to use TLS.
-	(mew-nntp-process-send-string
-	 process
-	 (mew-starttls-get-param 'nntp
-				 :capability-command t)))
+	(mew-nntp-command-mode-reader process pnm))
       )))
 (defun mew-nntp2-flush-queue (case &optional qfld)
   (let (msgs)

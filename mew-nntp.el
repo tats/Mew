@@ -476,11 +476,7 @@
 	(mew-nntp-set-port pnm port)
 	(mew-nntp-set-user pnm user)
         (mew-nntp-set-account pnm (format "%s@%s" user server))
-	(cond
-	 ;; STARTTLS requires capability-command after the session is
-	 ;; upgraded to use TLS.
-	 (starttlsp (mew-nntp-set-status pnm "mode-reader"))
-	 (t         (mew-nntp-set-status pnm "greeting")))
+	(mew-nntp-set-status pnm "greeting")
 	(mew-nntp-set-directive pnm directive)
 	(mew-nntp-set-bnm pnm bnm)
 	(mew-nntp-set-status-buf pnm bnm)
@@ -520,10 +516,7 @@
 	(when starttlsp
 	  ;; STARTTLS requires capability-command after the session is
 	  ;; upgraded to use TLS.
-	  (mew-nntp-process-send-string
-	   process
-	   (mew-starttls-get-param 'nntp
-				   :capability-command t)))
+	  (mew-nntp-command-mode-reader process pnm))
 	))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

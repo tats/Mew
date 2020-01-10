@@ -615,11 +615,7 @@
       (mew-smtp-set-user pnm user)
       (mew-smtp-set-auth-user pnm (mew-smtp-user case))
       (mew-smtp-set-auth-list pnm (mew-smtp-auth-list case))
-      (cond
-       ;; STARTTLS requires capability-command after the session is
-       ;; upgraded to use TLS.
-       (starttlsp (mew-smtp-set-status pnm "ehlo"))
-       (t         (mew-smtp-set-status pnm "greeting")))
+      (mew-smtp-set-status pnm "greeting"))
       (mew-smtp-set-fallback pnm fallback)
       ;;
       (set-process-buffer process nil)
@@ -630,11 +626,9 @@
       (when starttlsp
 	;; STARTTLS requires capability-command after the session is
 	;; upgraded to use TLS.
-	(mew-smtp-process-send-string
-	 process
-	 (mew-starttls-get-param 'smtp
-				 :capability-command t)))
-      )))
+	(mew-smtp-set-status pnm "ehlo")
+	(mew-smtp-command-ehlo process pnm))
+      ))
 
 (defun mew-smtp-flush-queue (case &optional qfld)
   (let (msgs)
