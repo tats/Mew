@@ -63,9 +63,9 @@
 	     (format "CAPABILITIES\r\n")
 	     :always-query-capabilities t
 	     :end-of-capability
-	     (format "^.\r")
+	     (format "^\\.\r")
 	     :end-of-command
-	     (format "^.\r")
+	     (format "^\\.\r")
 	     :success
 	     (format "^2.+ \r")
 	     :starttls-function
