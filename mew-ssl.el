@@ -22,10 +22,10 @@
 	     (format "EHLO %s\r\n" (mew-smtp-helo-domain case))
 	     :always-query-capabilities t
 	     :end-of-command
-	     (format "^[0-9]+ .*\r")
+	     (format "^[0-9]+ .*\r?\n")
 	     :end-of-capability
-	     (format "^[0-9]+ .*\r")
-	     :success (format "^2.*\r")
+	     (format "^[0-9]+ .*\r?\n")
+	     :success (format "^2.*\r?\n")
 	     :starttls-function
 	     (lambda (capabilities)
 	       (and (string-match "[ -]STARTTLS" capabilities)
@@ -35,9 +35,9 @@
 	     (format "1 CAPABILITY\r\n")
 	     :always-query-capabilities t
 	     :end-of-capability
-	     (format "\r\n")
+	     (format "\r?\n")
 	     :end-of-command
-	     (format "\r\n")
+	     (format "\r?\n")
 	     :success
 	     (format "^1 OK ")
 	     :starttls-function
@@ -51,7 +51,7 @@
 	    :end-of-capability
 	    (format "^\\.\r?\n\\|^-ERR")
 	    :end-of-command
-	    (format "^\\(-ERR\\|+OK\\).*\n")
+	    (format "^\\(-ERR\\|+OK\\).*\r?\n")
 	    :success
 	    (format "^\\+OK.*\n")
 	    :starttls-function
@@ -60,14 +60,14 @@
 		   "STLS\r\n"))))
     ;; RFC 4642
     (nntp . (:capability-command
-	     (format "CAPABILITIES\r\n")
+	     (format "CAPABILITIES\r?\n")
 	     :always-query-capabilities t
 	     :end-of-capability
-	     (format "^\\.\r")
+	     (format "^\\.\r?\n")
 	     :end-of-command
-	     (format "^\\.\r")
+	     (format "^\\.\r?\n")
 	     :success
-	     (format "^2.+ \r")
+	     (format "^2.+ \r?\n")
 	     :starttls-function
 	     (lambda (capabilities)
 	       (when (string-match-p "STARTTLS" capabilities)

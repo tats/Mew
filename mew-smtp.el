@@ -6,6 +6,12 @@
 ;;; Code:
 
 (require 'mew)
+(when (and (fboundp 'gnutls-available-p)
+	   (gnutls-available-p))
+  (require 'gnutls))
+;; XXX windows-nt seems to have no puny-encode-domain.
+(when (not (fboundp 'puny-encode-domain))
+  (defalias 'puny-encode-domain 'identity))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -407,14 +413,18 @@
 		;; XXX: do not use gnutls-trustfiles because
 		;; the precompiled file list is different from it.
 		(trustfiles nil)
-		(verror t))
+		(verror t)
+		(devnull
+		 (cond
+		  ((eq system-type 'windows-nt) "NUL")
+		  (t "/dev/null"))))
 	    (cond
 	     ((eq mew-ssl-verify-level 0) ;; ignore verror
 	      (setq verror nil))
 	     ((eq mew-ssl-verify-level 1) ;; trust w/o server cert
-	      (setq trustfiles '("/dev/null")))
+	      (setq trustfiles (list devnull)))
 	     ((eq mew-ssl-verify-level 2) ;; trust w/ server cert
-	      (setq trustfiles '("/dev/null")))
+	      (setq trustfiles (list devnull)))
 	     (t                            ;; verify w/ trustfiles
 	      (setq verror t)))
 	    (if (and (fboundp 'gnutls-available-p)
@@ -618,7 +628,7 @@
       (mew-smtp-set-user pnm user)
       (mew-smtp-set-auth-user pnm (mew-smtp-user case))
       (mew-smtp-set-auth-list pnm (mew-smtp-auth-list case))
-      (mew-smtp-set-status pnm "greeting"))
+      (mew-smtp-set-status pnm "greeting")
       (mew-smtp-set-fallback pnm fallback)
       ;;
       (set-process-buffer process nil)
@@ -631,7 +641,7 @@
 	;; upgraded to use TLS.
 	(mew-smtp-set-status pnm "ehlo")
 	(mew-smtp-command-ehlo process pnm))
-      ))
+      )))
 
 (defun mew-smtp-flush-queue (case &optional qfld)
   (let (msgs)
