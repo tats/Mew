@@ -1338,7 +1338,7 @@
         (mew-imap-set-account pnm (format "%s@%s" user server))
 	(mew-imap-set-auth pnm (mew-imap-auth case))
 	(mew-imap-set-auth-list pnm (mew-imap-auth-list case))
-	(mew-imap-set-status pnm "capability")
+	(mew-imap-set-status pnm "greeting")
 	(mew-imap-set-directive pnm directive)
 	(mew-imap-set-bnm pnm bnm)
 	(mew-imap-set-status-buf pnm bnm)
