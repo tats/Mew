@@ -1224,10 +1224,9 @@
 ;;; Opening IMAP
 ;;;
 
-(defun mew-imap-open (pnm case server port no-msg)
+(defun mew-imap-open (pnm case server port no-msg starttlsp)
   (let ((sprt (mew-*-to-port port))
 	(sslnp (mew-ssl-native-p (mew-imap-ssl case)))
-	(starttlsp (mew-ssl-starttls-p (mew-imap-ssl case)))
 	pro tm)
     (condition-case emsg
 	(progn
@@ -1279,9 +1278,12 @@
 	 (port (mew-*-to-string (mew-imap-port case)))
 	 (sshsrv (mew-imap-ssh-server case))
 	 (sslp (mew-imap-ssl case))
-	 (sslnp (mew-ssl-native-p (mew-imap-ssl case)))
-	 (starttlsp (mew-ssl-starttls-p (mew-imap-ssl case)))
 	 (sslport (mew-imap-ssl-port case))
+	 (sslnp (mew-ssl-native-p (mew-imap-ssl case)))
+	 (starttlsp
+	  (mew-ssl-starttls-p (mew-imap-ssl case)
+			      (mew-*-to-string (mew-imap-port case))
+			      (mew-imap-ssl-port case)))
 	 (proxysrv (mew-imap-proxy-server case))
 	 (proxyport (mew-imap-proxy-port case))
 	 ;; dirty but necessary for migration
@@ -1296,27 +1298,27 @@
     (if (mew-imap-get-process pnm)
 	(message "Another IMAP process is running. Try later")
       (cond
+       (sslnp
+	(setq process (mew-imap-open pnm case server port no-msg starttlsp)))
        (sshsrv
 	(setq sshpro (mew-open-ssh-stream case server port sshsrv))
 	(when sshpro
 	  (setq sshname (process-name sshpro))
 	  (setq lport (mew-ssh-pnm-to-lport sshname))
 	  (when lport
-	    (setq process (mew-imap-open pnm case "localhost" lport no-msg)))))
-       (sslnp
-	(setq process (mew-imap-open pnm case server port no-msg)))
+	    (setq process (mew-imap-open pnm case "localhost" lport no-msg nil)))))
        (sslp
-	(if (mew-port-equal port sslport) (setq tls mew-tls-imap))
+	(when starttlsp (setq tls mew-tls-imap))
 	(setq sslpro (mew-open-ssl-stream case server sslport tls))
 	(when sslpro
 	  (setq sslname (process-name sslpro))
 	  (setq lport (mew-ssl-pnm-to-lport sslname))
 	  (when lport
-	    (setq process (mew-imap-open pnm case mew-ssl-localhost lport no-msg)))))
+	    (setq process (mew-imap-open pnm case mew-ssl-localhost lport no-msg nil)))))
        (proxysrv
-	(setq process (mew-imap-open pnm case proxysrv proxyport no-msg)))
+	(setq process (mew-imap-open pnm case proxysrv proxyport no-msg nil)))
        (t
-	(setq process (mew-imap-open pnm case server port no-msg))))
+	(setq process (mew-imap-open pnm case server port no-msg nil))))
       (if (null process)
 	  (when (eq directive 'exec)
 	    (mew-imap-exec-recover bnm))
@@ -1415,7 +1417,7 @@
 	(set-process-filter process 'mew-imap-filter)
 	(set-process-buffer process buf)
 	;;
-	(when starttlsp
+	(when (and sslnp starttlsp)
 	  ;; STARTTLS requires capability-command after the session is
 	  ;; upgraded to use TLS.
 	  (mew-imap-set-status pnm "capability")

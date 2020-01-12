@@ -360,10 +360,9 @@
 ;;; Opening IMAP
 ;;;
 
-(defun mew-imap2-open (pnm case server port)
+(defun mew-imap2-open (pnm case server port starttls)
   (let ((sprt (mew-*-to-port port))
 	(sslnp (mew-ssl-native-p (mew-imap-ssl case)))
-	(starttlsp (mew-ssl-starttls-p (mew-imap-ssl case)))
 	pro tm)
     (condition-case emsg
 	(progn
@@ -401,34 +400,37 @@
 	 (pnm (mew-imap2-info-name case))
 	 (sshsrv (mew-imap-ssh-server case))
 	 (sslp (mew-imap-ssl case))
-	 (sslnp (mew-ssl-native-p (mew-imap-ssl case)))
-	 (starttlsp (mew-ssl-starttls-p (mew-imap-ssl case)))
 	 (sslport (mew-imap-ssl-port case))
+	 (sslnp (mew-ssl-native-p (mew-imap-ssl case)))
+	 (starttlsp
+	  (mew-ssl-starttls-p (mew-imap-ssl case)
+			      (mew-*-to-string (mew-imap-port case))
+			      (mew-imap-ssl-port case)))
 	 (proxysrv (mew-imap-proxy-server case))
 	 (proxyport (mew-imap-proxy-port case))
 	 process sshname sshpro sslname sslpro lport tls)
     (cond
+     (sslnp
+      (setq process (mew-imap2-open pnm case server port starttlsp)))
      (sshsrv
       (setq sshpro (mew-open-ssh-stream case server port sshsrv))
       (when sshpro
 	(setq sshname (process-name sshpro))
 	(setq lport (mew-ssh-pnm-to-lport sshname))
 	(when lport
-	  (setq process (mew-imap2-open pnm case "localhost" lport)))))
-     (sslnp
-      (setq process (mew-imap2-open pnm case server port)))
-    (sslp
-      (if (mew-port-equal port sslport) (setq tls mew-tls-imap))
+	  (setq process (mew-imap2-open pnm case "localhost" lport nil)))))
+     (sslp
+      (when starttlsp (setq tls mew-tls-imap))
       (setq sslpro (mew-open-ssl-stream case server sslport tls))
       (when sslpro
 	(setq sslname (process-name sslpro))
 	(setq lport (mew-ssl-pnm-to-lport sslname))
 	(when lport
-	  (setq process (mew-imap2-open pnm case mew-ssl-localhost lport)))))
+	  (setq process (mew-imap2-open pnm case mew-ssl-localhost lport nil)))))
      (proxysrv
-      (setq process (mew-imap2-open pnm case proxysrv proxyport)))
+      (setq process (mew-imap2-open pnm case proxysrv proxyport nil)))
      (t
-      (setq process (mew-imap2-open pnm case server port))))
+      (setq process (mew-imap2-open pnm case server port nil))))
     (if (null process)
 	(cond
 	 ((and sshsrv (null sshpro))
@@ -459,7 +461,7 @@
       (set-process-sentinel process 'mew-imap2-sentinel)
       (set-process-filter process 'mew-imap2-filter)
       (message "Copying in background...")
-      (when starttlsp
+      (when (and sslnp starttlsp)
 	;; STARTTLS requires capability-command after the session is
 	;; upgraded to use TLS.
 	(mew-imap2-set-status pnm "capability")

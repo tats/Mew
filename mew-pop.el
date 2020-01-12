@@ -610,10 +610,9 @@
 ;;; Opening POP
 ;;;
 
-(defun mew-pop-open (pnm case server port no-msg)
+(defun mew-pop-open (pnm case server port no-msg starttlsp)
   (let ((sprt (mew-*-to-port port))
 	(sslnp (mew-ssl-native-p (mew-pop-ssl case)))
-	(starttlsp (mew-ssl-starttls-p (mew-pop-ssl case)))
 	pro tm)
     (condition-case emsg
 	(progn
@@ -635,6 +634,8 @@
     pro))
 
 (defun mew-pop-timeout ()
+  (message (format "POP connection timed out (%d seconds)"
+		   mew-pop-timeout-time))
   (signal 'quit nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -649,9 +650,12 @@
 	 (port (mew-*-to-string (mew-pop-port case)))
 	 (sshsrv (mew-pop-ssh-server case))
 	 (sslp (mew-pop-ssl case))
-	 (sslnp (mew-ssl-native-p (mew-pop-ssl case)))
-	 (starttlsp (mew-ssl-starttls-p (mew-pop-ssl case)))
 	 (sslport (mew-pop-ssl-port case))
+	 (sslnp (mew-ssl-native-p (mew-pop-ssl case)))
+	 (starttlsp
+	  (mew-ssl-starttls-p (mew-pop-ssl case)
+			     (mew-*-to-string (mew-pop-port case))
+			     (mew-pop-ssl-port case)))
          (proxysrv (mew-pop-proxy-server case))
          (proxyport (mew-pop-proxy-port case))
 	 (pnm (mew-pop-info-name case))
@@ -662,27 +666,27 @@
     (if (mew-pop-get-process pnm)
 	(message "Another POP process is running. Try later")
       (cond
+       (sslnp
+	(setq process (mew-pop-open pnm case server port no-msg starttlsp)))
        (sshsrv
 	(setq sshpro (mew-open-ssh-stream case server port sshsrv))
 	(when sshpro
 	  (setq sshname (process-name sshpro))
 	  (setq lport (mew-ssh-pnm-to-lport sshname))
 	  (when lport
-	    (setq process (mew-pop-open pnm case "localhost" lport no-msg)))))
-       (sslnp
-	(setq process (mew-pop-open pnm case server port no-msg)))
+	    (setq process (mew-pop-open pnm case "localhost" lport no-msg nil)))))
        (sslp
-	(if (mew-port-equal port sslport) (setq tls mew-tls-pop))
+	(when starttlsp (setq tls mew-tls-pop))
 	(setq sslpro (mew-open-ssl-stream case server sslport tls))
 	(when sslpro
 	  (setq sslname (process-name sslpro))
 	  (setq lport (mew-ssl-pnm-to-lport sslname))
 	  (when lport
-	    (setq process (mew-pop-open pnm case mew-ssl-localhost lport no-msg)))))
+	    (setq process (mew-pop-open pnm case mew-ssl-localhost lport no-msg nil)))))
        (proxysrv
-	(setq process (mew-pop-open pnm case proxysrv proxyport no-msg)))
+	(setq process (mew-pop-open pnm case proxysrv proxyport no-msg nil)))
        (t
-	(setq process (mew-pop-open pnm case server port no-msg))))
+	(setq process (mew-pop-open pnm case server port no-msg nil))))
       (if (null process)
 	  (if (eq directive 'exec)
 	      (mew-summary-visible-buffer bnm))
@@ -752,7 +756,7 @@
 	(set-process-sentinel process 'mew-pop-sentinel)
 	(set-process-filter process 'mew-pop-filter)
 	(set-process-buffer process buf)
-	(when starttlsp
+	(when (and sslnp starttlsp)
 	  ;; STARTTLS requires capability-command after the session is
 	  ;; upgraded to use TLS.
 	  (mew-pop-command-capa process pnm))
