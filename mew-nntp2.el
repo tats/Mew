@@ -177,10 +177,9 @@
 ;;; Opening NNTP
 ;;;
 
-(defun mew-nntp2-open (pnm case server port)
+(defun mew-nntp2-open (pnm case server port starttlsp)
   (let ((sprt (mew-*-to-port port))
 	(sslnp (mew-ssl-native-p (mew-nntp-ssl case)))
-	(starttlsp (mew-ssl-starttls-p (mew-nntp-ssl case)))
 	pro tm)
     (condition-case emsg
 	(progn
@@ -218,30 +217,33 @@
 	(pnm (mew-nntp2-info-name case))
 	(sshsrv (mew-nntp-ssh-server case))
 	(sslp (mew-nntp-ssl case))
-	(sslnp (mew-ssl-native-p (mew-nntp-ssl case)))
-	(starttlsp (mew-ssl-starttls-p (mew-nntp-ssl case)))
 	(sslport (mew-nntp-ssl-port case))
+	(sslnp (mew-ssl-native-p (mew-imap-ssl case)))
+	(starttlsp
+	 (mew-ssl-starttls-p (mew-nntp-ssl case)
+			     (mew-*-to-string (mew-nntp-port case))
+			     (mew-nntp-ssl-port case)))
 	process sshname sshpro sslname sslpro lport tls)
     (cond
+     (sslnp
+      (setq process (mew-nntp2-open pnm case server port starttlsp)))
      (sshsrv
       (setq sshpro (mew-open-ssh-stream case server port sshsrv))
       (when sshpro
 	(setq sshname (process-name sshpro))
 	(setq lport (mew-ssh-pnm-to-lport sshname))
 	(when lport
-	  (setq process (mew-nntp2-open pnm case "localhost" lport)))))
-     (sslnp
-      (setq process (mew-nntp2-open pnm case server port)))
+	  (setq process (mew-nntp2-open pnm case "localhost" lport nil)))))
      (sslp
-      (if (mew-port-equal port sslport) (setq tls mew-tls-nntp))
+      (when starttlsp (setq tls mew-tls-nntp))
       (setq sslpro (mew-open-ssl-stream case server sslport tls))
       (when sslpro
 	(setq sslname (process-name sslpro))
 	(setq lport (mew-ssl-pnm-to-lport sslname))
 	(when lport
-	  (setq process (mew-nntp2-open pnm case mew-ssl-localhost lport)))))
+	  (setq process (mew-nntp2-open pnm case mew-ssl-localhost lport nil)))))
      (t
-      (setq process (mew-nntp2-open pnm case server port))))
+      (setq process (mew-nntp2-open pnm case server port nil))))
     (if (null process)
 	(cond
 	 ((and sshsrv (null sshpro))
@@ -267,7 +269,7 @@
       (set-process-sentinel process 'mew-nntp2-sentinel)
       (set-process-filter process 'mew-nntp2-filter)
       (message "Posting in background...")
-      (when starttlsp
+      (when (and sslnp starttlsp)
 	;; STARTTLS requires capability-command after the session is
 	;; upgraded to use TLS.
 	(mew-nntp-command-mode-reader process pnm))
