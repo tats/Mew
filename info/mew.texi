@@ -11431,7 +11431,7 @@ POP over SSL を使うか否か。@samp{'native} は GnuTLS
 を使った TLS/SSL 接続、@samp{'tunnel} は stunnel
 を使った TLS/SSL トンネル接続を意味する。
 @item mew-pop-ssl-port
-POP overSSL のポート番号。
+POP over SSL のポート番号。
 @item mew-pop-user
 POP のアカウント名。初期値はログイン名。
 @item mew-pop-auth
