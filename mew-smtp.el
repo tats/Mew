@@ -396,7 +396,7 @@
 ;;       and is also used for non-SMTP protocols.
 (if (fboundp 'make-network-process)
     (defun mew-open-network-stream (name buf server port proto sslnp starttlsp)
-      (let (family nowait pro tlsparams)
+      (let (family nowait pro tlsparams status-msg)
 	;; SMTP-specific
 	(when (and (eq proto 'smtp) mew-inherit-submission)
 	  (setq family mew-smtp-submission-family)
@@ -453,7 +453,7 @@
 				       (mapconcat 'identity
 						  (mapcar (lambda (a) (format "%s" a))
 							  (cdr tlsparams)) " "))))))
-		  (message "Creating SSL/TLS connection (GnuTLS)...")
+		  (setq status-msg "Creating SSL/TLS connection (GnuTLS)...")
 		  (setq pro
 			(list (make-network-process :name name :buffer buf
 						    :host hostname :service sslport
@@ -464,9 +464,9 @@
 			      'tls)))
 	      (progn
 		(setq pro nil)
-		(message "Creating SSL/TLS connection (GnuTLS)...FAILED (GnuTLS not available)")))))
+		(setq status-msg "Creating SSL/TLS connection (GnuTLS)...FAILED (GnuTLS not available)")))))
 	 ((and sslnp starttlsp)
-	  (message "Creating SSL/TLS connection (GnuTLS, STARTTLS)...")
+	  (setq status-msg "Creating SSL/TLS connection (GnuTLS, STARTTLS)...")
 	  (setq pro (open-network-stream
 		     name buf server port
 		     :type 'starttls
@@ -485,6 +485,7 @@
 		     :starttls-function
 		     (mew-starttls-get-param proto :starttls-function nil))))
 	 (t
+	  (setq status-msg "Creating TCP connection...")
 	  (setq pro (list (make-network-process :name name :buffer buf
 						:host server :service port
 						:family family :nowait nowait)
@@ -493,7 +494,10 @@
 			  'plain))))
 	(if (and (eq proto 'smtp) nowait)
 	    (run-at-time mew-smtp-submission-timeout nil 'mew-smtp-submission-timeout pro))
-	pro))
+	(if pro
+	    (with-temp-message status-msg pro)
+	  (progn (message status-msg)
+		 nil))))
   (defun mew-open-network-stream (name buf server port proto sslnp starttlsp)
     (open-network-stream name buf server port :return-list t)))
 
