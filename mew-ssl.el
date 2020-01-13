@@ -12,6 +12,8 @@
   (eq type 'native))
 (defun mew-ssl-starttls-p (type port sslport)
   "Return if STARTTLS should be used or not"
+  (mew-ssl-debug "<starttlsp>"
+		 (format "port=%s,sslport=%s\n" port sslport))
   (cond
    ;; mew-*-ssl is nil
    ((null type) nil)
