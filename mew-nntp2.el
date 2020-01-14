@@ -226,7 +226,8 @@
 	process sshname sshpro sslname sslpro lport tls)
     (cond
      (sslnp
-      (setq process (mew-nntp2-open pnm case server port starttlsp)))
+      (let ((serv (if starttlsp port sslport)))
+	(setq process (mew-nntp2-open pnm case server serv starttlsp))))
      (sshsrv
       (setq sshpro (mew-open-ssh-stream case server port sshsrv))
       (when sshpro
