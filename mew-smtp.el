@@ -417,9 +417,7 @@
 		(devnull
 		 (cond
 		  ((eq system-type 'windows-nt) "NUL")
-		  (t "/dev/null")))
-		(sslport (eval (intern-soft
-				(format "mew-%s-ssl-port" proto)))))
+		  (t "/dev/null"))))
 	    (cond
 	     ((eq mew-ssl-verify-level 0) ;; ignore verror
 	      (setq verror nil))
@@ -447,7 +445,7 @@
 		      (goto-char (point-max))
 		      (insert
 		       (format "\n<%s>\n%s\n"
-			       (format "TLS server=%s:%s" hostname sslport)
+			       (format "TLS server=%s:%s" hostname port)
 			       (format "nowait=%s, tlsparams=%s"
 				       nowait
 				       (mapconcat 'identity
@@ -456,7 +454,7 @@
 		  (setq status-msg "Creating SSL/TLS connection (GnuTLS)...")
 		  (setq pro
 			(list (make-network-process :name name :buffer buf
-						    :host hostname :service sslport
+						    :host hostname :service port
 						    :family family :nowait nowait
 						    :tls-parameters tlsparams)
 			      nil
@@ -579,7 +577,8 @@
 	  (setq sslport "submission")))
     (cond
      (sslnp
-      (setq process (mew-smtp-open pnm case server port starttlsp)))
+      (let ((serv (if starttlsp port sslport)))
+	(setq process (mew-smtp-open pnm case server serv starttlsp))))
      (sshsrv
       (setq sshpro (mew-open-ssh-stream case server port sshsrv))
       (when sshpro

@@ -443,7 +443,8 @@
 	(message "Another NNTP process is running. Try later")
       (cond
        (sslnp
-	(setq process (mew-nntp-open pnm case server port no-msg starttlsp)))
+	(let ((serv (if starttlsp port sslport)))
+	  (setq process (mew-nntp-open pnm case server serv no-msg starttlsp))))
        (sshsrv
 	(setq sshpro (mew-open-ssh-stream case server port sshsrv))
 	(when sshpro
