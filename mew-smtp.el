@@ -394,6 +394,9 @@
 
 ;;; XXX: (mew-open-network-stream) alreays returns a list
 ;;       and is also used for non-SMTP protocols.
+;;; XXX: port must be resolved by using mew-serv-to-port
+;;       because some service names are not in /etc/services.
+;;       mew-serv-to-port uses mew-port-db.
 (if (fboundp 'make-network-process)
     (defun mew-open-network-stream (name buf server port proto sslnp starttlsp)
       (let (family nowait pro tlsparams status-msg)
@@ -455,7 +458,8 @@
 		  (setq status-msg "Creating SSL/TLS connection (GnuTLS)...")
 		  (setq pro
 			(list (make-network-process :name name :buffer buf
-						    :host hostname :service port
+						    :host hostname
+						    :service (mew-serv-to-port port)
 						    :family family :nowait nowait
 						    :tls-parameters tlsparams)
 			      nil
