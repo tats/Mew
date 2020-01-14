@@ -4,6 +4,10 @@
 
 			   <Important Note>
 
+* Mew now supports GnuTLS library for TLS connections when the Emacs
+  is built with it.  To enable it, set mew-{imap,nntp,pop,smtp}-ssl to
+  'native.
+
 * mew-smtp-port now supports Unix domain socket.  If it is set to an
   absolute pathname such as "/var/run/msp.sock", Mew will use it as a
   Unix domain socket which supports SOCK_STREAM and understands SMTP.
