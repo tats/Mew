@@ -407,6 +407,7 @@
 	  (setq family 'local)
 	  (setq server 'local))
 	;; GnuTLS-specific
+	(message (format "DEBUG2: sslnp=%s, starttlsp=%s, port=%s" sslnp starttlsp port))
 	(cond
 	 ((and sslnp (not starttlsp))
 	  (let ((hostname (puny-encode-domain server))
@@ -464,6 +465,7 @@
 		(setq pro nil)
 		(setq status-msg "Creating SSL/TLS connection (GnuTLS)...FAILED (GnuTLS not available)")))))
 	 ((and sslnp starttlsp)
+	  (message (format "DEBUG3: sslnp=%s, starttlsp=%s, port=%s" sslnp starttlsp port))
 	  (setq status-msg "Creating SSL/TLS connection (GnuTLS, STARTTLS)...")
 	  (setq pro (open-network-stream
 		     name buf server port
@@ -510,6 +512,7 @@
 	(progn
 	  (setq tm (run-at-time mew-smtp-timeout-time nil 'mew-smtp-timeout))
 	  (message "Connecting to the SMTP server...")
+	  (message (format "DEBUG1: sslnp=%s, starttlsp=%s, sprt=%s" sslnp starttlsp sprt))
 	  (setq pro (mew-open-network-stream pnm nil server sprt
 					     'smtp sslnp starttlsp))
 	  (when (and sslnp starttlsp)
