@@ -412,7 +412,7 @@
     (cond
      (sslnp
       (let ((serv (if starttlsp port sslport)))
-	(setq process (mew-imap-open pnm case server serv no-msg starttlsp))))
+	(setq process (mew-imap2-open pnm case server serv starttlsp))))
      (sshsrv
       (setq sshpro (mew-open-ssh-stream case server port sshsrv))
       (when sshpro
