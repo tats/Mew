@@ -398,7 +398,8 @@
 ;;       because some service names are not in /etc/services.
 ;;       mew-serv-to-port uses mew-port-db.
 (if (fboundp 'make-network-process)
-    (defun mew-open-network-stream (name buf server port proto sslnp starttlsp)
+    (defun mew-open-network-stream (name buf server port proto sslnp
+					 starttlsp case)
       (let (family nowait pro tlsparams status-msg)
 	;; SMTP-specific
 	(when (and (eq proto 'smtp) mew-inherit-submission)
@@ -422,11 +423,11 @@
 		  ((eq system-type 'windows-nt) "NUL")
 		  (t "/dev/null"))))
 	    (cond
-	     ((eq mew-ssl-verify-level 0) ;; ignore verror
+	     ((eq (mew-ssl-verify-level case) 0) ;; ignore verror
 	      (setq verror nil))
-	     ((eq mew-ssl-verify-level 1) ;; trust w/o server cert
+	     ((eq (mew-ssl-verify-level case) 1) ;; trust w/o server cert
 	      (setq trustfiles (list devnull)))
-	     ((eq mew-ssl-verify-level 2) ;; trust w/ server cert
+	     ((eq (mew-ssl-verify-level case) 2) ;; trust w/ server cert
 	      (setq trustfiles (list devnull)))
 	     (t                            ;; verify w/ trustfiles
 	      (setq verror t)))
@@ -500,7 +501,7 @@
 	    (with-temp-message status-msg pro)
 	  (progn (message status-msg)
 		 nil))))
-  (defun mew-open-network-stream (name buf server port proto sslnp starttlsp)
+  (defun mew-open-network-stream (name buf server port proto sslnp starttlsp vlevel)
     (open-network-stream name buf server port :return-list t)))
 
 (defun mew-smtp-open (pnm case server port starttlsp)
@@ -515,7 +516,7 @@
 	  (setq tm (run-at-time mew-smtp-timeout-time nil 'mew-smtp-timeout))
 	  (message "Connecting to the SMTP server...")
 	  (setq pro (mew-open-network-stream pnm nil server sprt
-					     'smtp sslnp starttlsp))
+					     'smtp sslnp starttlsp case))
 	  (when (and sslnp starttlsp)
 	    (mew-smtp-debug "*GREETING*"
 			    (plist-get (cdr pro) :greeting))
