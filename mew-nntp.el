@@ -397,7 +397,7 @@
 	  (setq tm (run-at-time mew-nntp-timeout-time nil 'mew-nntp-timeout))
 	  (or no-msg (message "Connecting to the NNTP server..."))
 	  (setq pro (mew-open-network-stream pnm nil server sprt
-					     'nntp sslnp starttlsp))
+					     'nntp sslnp starttlsp case))
 	  (setq pro (car pro))
 	  (mew-process-silent-exit pro)
 	  (mew-set-process-cs pro mew-cs-text-for-net mew-cs-text-for-net)
