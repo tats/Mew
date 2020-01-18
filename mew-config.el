@@ -157,6 +157,17 @@
 (defun mew-ssl-verify-level (&optional case)
   (mew-cfent-value case "ssl-verify-level" mew-ssl-verify-level))
 
+(defun mew-ssl-client-keycert-list (&optional case)
+  (mew-cfent-value case "ssl-client-keycert-list"
+		   mew-ssl-client-keycert-list))
+
+(defun mew-ssl-trustfiles (&optional case)
+  (mew-cfent-value case "ssl-trustfiles" mew-ssl-trustfiles))
+
+(defun mew-ssl-algorithm-priority (&optional case)
+  (mew-cfent-value case "ssl-algorithm-priority"
+		   mew-ssl-algorithm-priority))
+
 ;;
 
 (defun mew-smtp-server (&optional case)

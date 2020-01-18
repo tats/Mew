@@ -87,7 +87,17 @@
   (let ((p (plist-get (cdr (assq proto mew-ssl-native-starttls-plist)) key)))
     (if evalp (eval p) p)))
 
-(defvar mew-ssl-native-client-keycert-list nil
+;; XXX: the default value of gnutls-trustfiles can
+;; be different from the compile-time list.
+(defvar mew-ssl-trustfiles nil
+  "List of CA buldle location filenames used by GnuTLS.
+nil - use the default list specified at compile time of the Emacs.")
+
+(defvar mew-ssl-algorithm-priority nil
+  "TLS priority string used by GnuTLS.
+nil - use the default specified by Emacs Network Security Manager.")
+
+(defvar mew-ssl-client-keycert-list nil
   "The client-side certificate used for TLS connection.
 '((\"keyfile\" \"certfile\")) - A list of key/cert pairs.")
 
