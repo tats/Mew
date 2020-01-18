@@ -6,12 +6,10 @@
 ;;; Code:
 
 (require 'mew)
+(autoload 'puny-encode-domain "puny")
 (when (and (fboundp 'gnutls-available-p)
 	   (gnutls-available-p))
   (require 'gnutls))
-;; XXX windows-nt seems to have no puny-encode-domain.
-(when (not (fboundp 'puny-encode-domain))
-  (defalias 'puny-encode-domain 'identity))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -397,10 +395,14 @@
 ;;; XXX: port must be resolved by using mew-serv-to-port
 ;;       because some service names are not in /etc/services.
 ;;       mew-serv-to-port uses mew-port-db.
+(setq mew--advice-tls-parameters-plist
+      (list :tls-parameters nil))
+(defun mew--advice-filter-args-gnutls-negotiate (&rest args)
+  (nconc (car args) mew--advice-tls-parameters-plist))
 (if (fboundp 'make-network-process)
     (defun mew-open-network-stream (name buf server port proto sslnp
 					 starttlsp case)
-      (let (family nowait pro tlsparams status-msg)
+      (let (family nowait pro tlsparams)
 	;; SMTP-specific
 	(when (and (eq proto 'smtp) mew-inherit-submission)
 	  (setq family mew-smtp-submission-family)
@@ -412,96 +414,124 @@
 	  (setq server 'local))
 	;; GnuTLS-specific
 	(cond
-	 ((and sslnp (not starttlsp))
+	 ((and sslnp (or (not (fboundp 'gnutls-available-p))
+			 (not (gnutls-available-p))))
+	  (setq pro
+		(list nil
+		      :error t
+		      :status-msg "Opening a TLS connection (GnuTLS)...FAILED (GnuTLS not available)")))
+	 ((and sslnp)
 	  (let ((hostname (puny-encode-domain server))
-		;; XXX: do not use gnutls-trustfiles because
-		;; the precompiled file list is different from it.
-		(trustfiles nil)
-		(verror t)
-		(devnull
-		 (cond
-		  ((eq system-type 'windows-nt) "NUL")
-		  (t "/dev/null"))))
-	    (cond
-	     ((eq (mew-ssl-verify-level case) 0) ;; ignore verror
-	      (setq verror nil))
-	     ((eq (mew-ssl-verify-level case) 1) ;; trust w/o server cert
-	      (setq trustfiles (list devnull)))
-	     ((eq (mew-ssl-verify-level case) 2) ;; trust w/ server cert
-	      (setq trustfiles (list devnull)))
-	     (t                            ;; verify w/ trustfiles
-	      (setq verror t)))
-	    (if (and (fboundp 'gnutls-available-p)
-		     (gnutls-available-p))
-		(progn
-		  (setq tlsparams
-			(cons 'gnutls-x509pki
-			      (gnutls-boot-parameters
-			       :type 'gnutls-x509pki
-			       :keylist mew-ssl-native-client-keycert-list
-			       :trustfiles trustfiles
-			       :min-prime-bits mew-ssl-native-min-prime-bits
-			       :verify-error verror
-			       :hostname hostname)))
-		  ;; debug output: TLS params
-		  (when (mew-debug 'net)
-		    (with-current-buffer (get-buffer-create mew-buffer-debug)
-		      (goto-char (point-max))
-		      (insert
-		       (format "\n<%s>\n%s\n"
-			       (format "TLS server=%s:%s" hostname port)
-			       (format "nowait=%s, tlsparams=%s"
-				       nowait
-				       (mapconcat 'identity
-						  (mapcar (lambda (a) (format "%s" a))
-							  (cdr tlsparams)) " "))))))
-		  (setq status-msg "Creating SSL/TLS connection (GnuTLS)...")
-		  (setq pro
-			(list (make-network-process :name name :buffer buf
-						    :host hostname
-						    :service (mew-serv-to-port port)
-						    :family family :nowait nowait
-						    :tls-parameters tlsparams)
-			      nil
-			      nil
-			      'tls)))
-	      (progn
-		(setq pro nil)
-		(setq status-msg "Creating SSL/TLS connection (GnuTLS)...FAILED (GnuTLS not available)")))))
-	 ((and sslnp starttlsp)
-	  (setq status-msg "Creating SSL/TLS connection (GnuTLS, STARTTLS)...")
-	  (setq pro (open-network-stream
-		     name buf server port
-		     :type 'starttls
-		     :return-list t
-		     :nowait nowait
-		     :always-query-capabilities
-		     (mew-starttls-get-param proto :always-query-capabilities nil)
-		     :capability-command
-		     (mew-starttls-get-param proto :capability-command t)
-		     :end-of-capability
-		     (mew-starttls-get-param proto :end-of-capability t)
-		     :end-of-command
-		     (mew-starttls-get-param proto :end-of-command t)
-		     :success
-		     (mew-starttls-get-param proto :success t)
-		     :starttls-function
-		     (mew-starttls-get-param proto :starttls-function nil))))
+		;; verify w/ trustfiles by default.
+		(trustfiles (mew-ssl-trustfiles case))
+		(verify-error nil))
+	    (when (> (mew-ssl-verify-level case) 0)
+	      (setq verify-error (list :trustfiles :hostname)))
+	    (setq tlsparams
+		  (cons 'gnutls-x509pki
+			(gnutls-boot-parameters
+			 :type 'gnutls-x509pki
+			 :keylist (mew-ssl-client-keycert-list case)
+			 :trustfiles (mew-ssl-trustfiles case)
+			 :priority (mew-ssl-algorithm-priority case)
+			 :min-prime-bits mew-ssl-native-min-prime-bits
+			 :verify-error verify-error
+			 :hostname hostname)))
+	    ;; debug output: TLS params
+	    (when (mew-debug 'net)
+	      (with-current-buffer (get-buffer-create mew-buffer-debug)
+		(goto-char (point-max))
+		(insert
+		 (format "\n<%s>\n%s\n"
+			 (format "TLS proto=%s, server=%s:%s, starttlsp=%s, verify-level=%s"
+				 proto hostname port starttlsp (mew-ssl-verify-level case))
+			 (format "nowait=%s, tlsparams=%s"
+				 nowait
+				 (mapconcat 'identity
+					    (mapcar (lambda (a) (format "%s" a))
+						    (cdr tlsparams)) " "))))))
+	    (if starttlsp
+		(with-temp-message "Opening a TLS connection (GnuTLS, STARTTLS)..."
+		  ;; XXX: (open-network-stream) does not pass
+		  ;; tlsparams to (gnutls-negotiate) to start
+		  ;; STARTTLS.  As a workaround, add an advice to
+		  ;; forcibly append :tlsparams.  This should be fixed
+		  ;; in (open-network-stream).
+		  (setq mew--advice-tls-parameters-plist (list :tlsparams tlsparams))
+		  (advice-add 'gnutls-negotiate
+			      :filter-args #'mew--advice-filter-args-gnutls-negotiate)
+		  (setq pro (open-network-stream
+			     name buf server port
+			     :type 'starttls
+			     :return-list t
+			     :nowait nowait
+			     :always-query-capabilities
+			     (mew-starttls-get-param proto :always-query-capabilities nil)
+			     :capability-command
+			     (mew-starttls-get-param proto :capability-command t)
+			     :end-of-capability
+			     (mew-starttls-get-param proto :end-of-capability t)
+			     :end-of-command
+			     (mew-starttls-get-param proto :end-of-command t)
+			     :success
+			     (mew-starttls-get-param proto :success t)
+			     :starttls-function
+			     (mew-starttls-get-param proto :starttls-function nil)))
+		  (advice-remove 'gnutls-negotiate
+				 #'mew--advice-filter-args-gnutls-negotiate)
+		  (let ((plainp (eq 'plain (plist-get (cdr pro) :type)))
+			(openp  (eq 'open (process-status (car pro))))
+			;; Falling back to a plain connection is
+			;; allowed only when verify-level < 2.
+			(needtlsp (> (mew-ssl-verify-level case) 1)))
+		    (cond
+		     ((not openp)
+		      (let ((msg (plist-get (cdr pro) :error)))
+			(setq pro (list nil
+					:error t
+					:status-msg
+					(format
+					 "Opening a TLS connection (GnuTLS, STARTTLS)...FAILED: %s"
+					 msg)))))
+		     ((and plainp needtlsp)
+		      (delete-process (car pro))
+		      (setq pro (list nil
+				      :error t
+				      :status-msg "Opening a TLS connection (GnuTLS, STARTTLS)...FAILED")))
+		     (t
+		      (setq pro (list
+				 (car pro)
+				 :error nil))))))
+	      (with-temp-message "Opening a TLS connection (GnuTLS)..."
+		(setq pro
+		      (list (make-network-process :name name :buffer buf
+						  :host hostname
+						  :service (mew-serv-to-port port)
+						  :family family :nowait nowait
+						  :tls-parameters tlsparams)
+			    :greeting nil
+			    :capabilities nil
+			    :type 'tls
+			    :error nil))))))
 	 (t
-	  (setq status-msg "Creating TCP connection...")
-	  (setq pro (list (make-network-process :name name :buffer buf
-						:host server :service port
-						:family family :nowait nowait)
-			  nil
-			  nil
-			  'plain))))
+	  (with-temp-message "Opening a TCP connection..."
+	    (let ((params '(:name name :buffer buf
+				  :service port :family family
+				  :nowait nowait))
+		  ;; :host will be ignored when family is 'local.
+		  (host (if (not (eq family 'local))
+			    '(:host server))))
+	      (setq pro (list (eval (nconc '(make-network-process) params host))
+			      :greeting nil
+			      :capabilities nil
+			      :type 'plain
+			      :error nil))))))
 	(if (and (eq proto 'smtp) nowait)
 	    (run-at-time mew-smtp-submission-timeout nil 'mew-smtp-submission-timeout pro))
-	(if pro
-	    (with-temp-message status-msg pro)
-	  (progn (message status-msg)
-		 nil))))
-  (defun mew-open-network-stream (name buf server port proto sslnp starttlsp vlevel)
+	(when (plist-get (cdr pro) :error)
+	  (message (plist-get (cdr pro) :status-msg)))
+	pro))
+  (defun mew-open-network-stream (name buf server port proto sslnp starttlsp case)
     (open-network-stream name buf server port :return-list t)))
 
 (defun mew-smtp-open (pnm case server port starttlsp)
