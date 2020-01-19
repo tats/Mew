@@ -395,8 +395,7 @@
 ;;; XXX: port must be resolved by using mew-serv-to-port
 ;;       because some service names are not in /etc/services.
 ;;       mew-serv-to-port uses mew-port-db.
-(setq mew--advice-tls-parameters-plist
-      (list :tls-parameters nil))
+(setq mew--advice-tls-parameters-plist nil)
 (defun mew--advice-filter-args-gnutls-negotiate (&rest args)
   (nconc (car args) mew--advice-tls-parameters-plist))
 (if (fboundp 'make-network-process)
@@ -455,9 +454,9 @@
 		  ;; XXX: (open-network-stream) does not pass
 		  ;; tlsparams to (gnutls-negotiate) to start
 		  ;; STARTTLS.  As a workaround, add an advice to
-		  ;; forcibly append :tlsparams.  This should be fixed
-		  ;; in (open-network-stream).
-		  (setq mew--advice-tls-parameters-plist (list :tlsparams tlsparams))
+		  ;; forcibly append the parameters.  This should be
+		  ;; fixed in (open-network-stream).
+		  (setq mew--advice-tls-parameters-plist (cdr tlsparams))
 		  (advice-add 'gnutls-negotiate
 			      :filter-args #'mew--advice-filter-args-gnutls-negotiate)
 		  (setq pro (open-network-stream
@@ -515,17 +514,18 @@
 			    :error nil))))))
 	 (t
 	  (with-temp-message "Opening a TCP connection..."
-	    (let ((params '(:name name :buffer buf
-				  :service port :family family
-				  :nowait nowait))
+	    (let ((params (list :name name :buffer buf
+				:service port :family family
+				:nowait nowait))
 		  ;; :host will be ignored when family is 'local.
 		  (host (if (not (eq family 'local))
-			    '(:host server))))
-	      (setq pro (list (eval (nconc '(make-network-process) params host))
-			      :greeting nil
-			      :capabilities nil
-			      :type 'plain
-			      :error nil))))))
+			    (list :host server))))
+	      (setq pro (list
+			 (apply #'make-network-process (nconc params host))
+			 :greeting nil
+			 :capabilities nil
+			 :type 'plain
+			 :error nil))))))
 	(if (and (eq proto 'smtp) nowait)
 	    (run-at-time mew-smtp-submission-timeout nil 'mew-smtp-submission-timeout pro))
 	(when (plist-get (cdr pro) :error)
