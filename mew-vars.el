@@ -574,6 +574,12 @@ is kept for further connections. This must be 't' for IMAP and NNTP."
   :group 'mew-net
   :type 'boolean)
 
+(defcustom mew-ssl-default 'tunnel
+  "*Default SSL/TLS type when mew-{imap,nntp,pop,smtp}-ssl is 't'."
+  :group 'mew-net
+  :type '(choice (const :tag "Native (GnuTLS)" native)
+		 (const :tag "External (stunnel)" tunnel)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; SMTP

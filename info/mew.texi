@@ -12560,14 +12560,16 @@ command line.
 @vindex mew-smtp-ssl
 
 @ifset ja
-SSL を使うには、認証局方式の信用モデルを理解している必要があります。現
-在、Mew は SSL のために "stunnel" バージョン 3、4、5 をサポートしていま
-す。
+SSL を使うには、認証局方式の信用モデルを理解している必要があります。
+Mew は SSL のために、"stunnel" バージョン 3、4、5、もしくは GnuTLS
+をサポートしています。GnuTLS を使うためには、Emacs に GnuTLS
+ライブラリが組み込まれている必要があります。
 @end ifset
 @ifset en
 Before you use SSL, you should understand the trust model of
-certificate authorities (CA). Currently, Mew supports "stunnel" version
-3, 4 and 5 for SSL.
+certificate authorities (CA).  For SSL, Mew supports "stunnel" version
+3, 4 and 5, and GnuTLS.  Note that GnuTLS requires an Emacs built with
+GnuTLS library.
 @end ifset
 
 @ifset ja
@@ -12682,13 +12684,22 @@ server).
 
 @ifset ja
 後は各プロトコルの SSL に関する変数を設定して下しさい。たとえば、POP
-over SSL を利用するには、@samp{mew-pop-ssl} を @samp{t} にします。また、
+over SSL を利用するには、@samp{mew-pop-ssl} を @samp{t} にします。
+SSL の実装として stunnel もしくは GnuTLS を明示的に指定したい場合は、
+それぞれ @samp{'tunnel}, @samp{'native} を指定します。
+@samp{t} を設定したプロトコルについては、
+@smap{mew-ssl-default} を使って使用する実装を選択することが可能です。
+また、
 ポート番号が標準と異なる場合には、@samp{mew-pop-ssl-port} を設定して下
 さい。
 @end ifset
 @ifset en
 Then configure SSL-related variables of each protocol. For example, if
 you want to use POP over SSL, set @samp{mew-pop-ssl} to @samp{t}.
+To specify the SSL implementation, @samp{'tunnel} or @samp{'native}
+can be used instead of @samp{t} for stunnel or GnuTLS, respectively.
+For protocols with @samp{t}, the value of @samp{mew-ssl-default}
+is used as the default SSL implementation.
 Also, if its port is not a standard one, configure
 @samp{mew-pop-ssl-port}.
 @end ifset
