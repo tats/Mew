@@ -218,7 +218,7 @@
 	(sshsrv (mew-nntp-ssh-server case))
 	(sslp (mew-nntp-ssl case))
 	(sslport (mew-nntp-ssl-port case))
-	(sslnp (mew-ssl-native-p (mew-imap-ssl case)))
+	(sslnp (mew-ssl-native-p (mew-nntp-ssl case)))
 	(starttlsp
 	 (mew-ssl-starttls-p (mew-nntp-ssl case)
 			     (mew-*-to-string (mew-nntp-port case))
