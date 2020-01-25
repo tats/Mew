@@ -12688,7 +12688,7 @@ over SSL を利用するには、@samp{mew-pop-ssl} を @samp{t} にします。
 SSL の実装として stunnel もしくは GnuTLS を明示的に指定したい場合は、
 それぞれ @samp{'tunnel}, @samp{'native} を指定します。
 @samp{t} を設定したプロトコルについては、
-@smap{mew-ssl-default} を使って使用する実装を選択することが可能です。
+@samp{mew-ssl-default} を使って使用する実装を選択することが可能です。
 また、
 ポート番号が標準と異なる場合には、@samp{mew-pop-ssl-port} を設定して下
 さい。
