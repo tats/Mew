@@ -11751,10 +11751,10 @@ The address family to be used for the SMTP server.  The default value is 'ipv4.
 The name of SSH server which forwards the SMTP port.
 @item mew-smtp-ssl
 If non-nil, SMTP connections are made over SSL.
-@item mew-smtp-ssl-port
-The port for SMTP over SSL.
 @samp{'native} enables GnuTLS for native TLS connection
 and @samp{'tunnel} uses stunnel to establish a TLS tunnel.
+@item mew-smtp-ssl-port
+The port for SMTP over SSL.
 @item mew-smtp-user
 The user name on your SMTP server. If not configured, your e-mail
 address is automatically set.
