@@ -264,7 +264,7 @@
       (mew-nntp2-set-ssl-process pnm sslpro)
       (mew-nntp2-set-user pnm user)
       (mew-nntp2-set-account pnm (format "%s@%s" user server))
-      (mew-nntp-set-status pnm "greeting")
+      (mew-nntp2-set-status pnm "greeting")
       ;;
       (set-process-buffer process nil)
       (set-process-sentinel process 'mew-nntp2-sentinel)
