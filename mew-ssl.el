@@ -7,21 +7,15 @@
 
 (require 'mew)
 
+(defvar mew-ssl-default 'tunnel
+  "Default SSL/TLS type when mew-{imap,nntp,pop,smtp}-ssl is 't'.")
 (defun mew-ssl-native-p (type)
   "Return if the type is native or not"
-  (eq type 'native))
+  (or (eq type 'native)
+      (and type (eq mew-ssl-default 'native))))
 (defun mew-ssl-starttls-p (type port sslport)
   "Return if STARTTLS should be used or not"
-  (cond
-   ;; mew-*-ssl is nil
-   ((null type) nil)
-   ;; mew-*-ssl is either native or tunnel
-   ;; and mew-*-ssl-port is not equal to mew-*-port.
-   ((and (memq type '(native tunnel))
-	 (mew-port-equal port sslport)))
-   ;; mew-*-ssl is t and mew-*-ssl-port is not equal
-   ;; to mew-*-port.
-   (t (mew-port-equal port sslport))))
+  (and type (mew-port-equal port sslport)))
 (defvar mew-ssl-native-min-prime-bits 2048
   "Default prime bits for GnuTLS connection.")
 (defvar mew-ssl-native-starttls-plist
