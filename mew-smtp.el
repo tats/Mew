@@ -390,7 +390,7 @@
 
 (defvar mew-smtp-submission-family 'ipv4)
 
-;;; XXX: (mew-open-network-stream) alreays returns a list
+;;; XXX: (mew-open-network-stream) always returns a list
 ;;       and is also used for non-SMTP protocols.
 ;;; XXX: port must be resolved by using mew-serv-to-port
 ;;       because some service names are not in /etc/services.
