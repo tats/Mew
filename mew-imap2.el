@@ -360,7 +360,7 @@
 ;;; Opening IMAP
 ;;;
 
-(defun mew-imap2-open (pnm case server port starttls)
+(defun mew-imap2-open (pnm case server port starttlsp)
   (let ((sprt (mew-*-to-port port))
 	(sslnp (mew-ssl-native-p (mew-imap-ssl case)))
 	pro tm)
