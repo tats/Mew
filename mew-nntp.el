@@ -399,6 +399,7 @@
 	  (setq pro (mew-open-network-stream pnm nil server sprt
 					     'nntp sslnp starttlsp case))
 	  (setq pro (car pro))
+	  (when (not (processp pro)) (signal 'quit nil))
 	  (mew-process-silent-exit pro)
 	  (mew-set-process-cs pro mew-cs-text-for-net mew-cs-text-for-net)
 	  (or no-msg (message "Connecting to the NNTP server...done")))

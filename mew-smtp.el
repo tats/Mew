@@ -421,11 +421,26 @@
 		      :status-msg "Opening a TLS connection (GnuTLS)...FAILED (GnuTLS not available)")))
 	 ((and sslnp)
 	  (let ((hostname (puny-encode-domain server))
-		;; verify w/ trustfiles by default.
+		;; Note: on Emacs 26.3 and prior GnuTLS always uses
+		;; the system-wide default path first even if
+		;; trustfiles is specified.
 		(trustfiles (mew-ssl-trustfiles case))
-		(verify-error nil))
+		(verify-error nil)
+		;; Disable NSM query and set the level to 'low by
+		;; default.
+		(nsm-noninteractive t)
+		(network-security-level 'low))
 	    (when (> (mew-ssl-verify-level case) 0)
-	      (setq verify-error (list :trustfiles :hostname)))
+	      ;; verify w/ trustfiles and w/ hostname.
+	      (setq network-security-level 'medium)
+	      ;;
+	      ;; Note: do not set verify-error directly when
+	      ;; (open-network-stream) (i.e. starttlsp) because the
+	      ;; certificate validation will be checked in NSM, not
+	      ;; upon (make-network-process) in (open-network-stream).
+	      ;;
+	      (when (not starttlsp)
+		(setq verify-error (list :trustfiles :hostname))))
 	    (setq tlsparams
 		  (cons 'gnutls-x509pki
 			(gnutls-boot-parameters
@@ -478,8 +493,12 @@
 			     (mew-starttls-get-param proto :starttls-function nil)))
 		  (advice-remove 'gnutls-negotiate
 				 #'mew--advice-filter-args-gnutls-negotiate)
+		  ;;
+		  ;; When a validation error occurs, (car pro) will be nil.
+		  ;;
 		  (let ((plainp (eq 'plain (plist-get (cdr pro) :type)))
-			(openp  (eq 'open (process-status (car pro))))
+			(openp  (and (car pro)
+				     (eq 'open (process-status (car pro)))))
 			;; Falling back to a plain connection is
 			;; allowed only when verify-level < 2.
 			(needtlsp (> (mew-ssl-verify-level case) 1)))
@@ -553,6 +572,7 @@
 	    (mew-smtp-debug "*CAPABILITIES*"
 			    (plist-get (cdr pro) :capabilities)))
 	  (setq pro (car pro))
+	  (when (not (processp pro)) (signal 'quit nil))
 	  (mew-process-silent-exit pro)
 	  (mew-set-process-cs pro mew-cs-text-for-net mew-cs-text-for-net)
 	  (message "Connecting to the SMTP server...done"))
