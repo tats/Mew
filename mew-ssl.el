@@ -12,7 +12,7 @@
 (defun mew-ssl-native-p (type)
   "Return if the type is native or not"
   (or (eq type 'native)
-      (and type (eq mew-ssl-default 'native))))
+      (and (eq type t) (eq mew-ssl-default 'native))))
 (defun mew-ssl-starttls-p (type port sslport)
   "Return if STARTTLS should be used or not"
   (and type (mew-port-equal port sslport)))
