@@ -616,7 +616,7 @@
 	pro tm)
     (condition-case emsg
 	(progn
-	  (setq tm (run-at-time mew-pop-timeout-time nil 'mew-pop-timeout))
+	  (setq tm (run-at-time t mew-pop-timeout-time 'mew-pop-timeout))
 	  (or no-msg (message "Connecting to the POP server..."))
 	  (setq pro (mew-open-network-stream pnm nil server sprt
 					     'pop sslnp starttlsp case))
@@ -635,9 +635,11 @@
     pro))
 
 (defun mew-pop-timeout ()
-  (message (format "POP connection timed out (%d seconds)"
-		   mew-pop-timeout-time))
-  (signal 'quit nil))
+  ;; Do not timeout if the NSM query pane is active.
+  (unless (get-buffer "*Network Security Manager*")
+    (message "POP connection timed out (%d seconds)"
+	     mew-pop-timeout-time)
+    (signal 'quit nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
