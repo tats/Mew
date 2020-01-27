@@ -183,7 +183,7 @@
 	pro tm)
     (condition-case emsg
 	(progn
-	  (setq tm (run-at-time mew-nntp-timeout-time nil 'mew-nntp2-timeout))
+	  (setq tm (run-at-time t mew-nntp-timeout-time 'mew-nntp2-timeout))
 	  (message "Connecting to the NNTP server...")
 	  (setq pro (mew-open-network-stream pnm nil server sprt
 					     'nntp sslnp starttlsp case))
@@ -202,9 +202,11 @@
     pro))
 
 (defun mew-nntp2-timeout ()
-  (message (format "NNTP connection timed out (%d seconds)"
-		   mew-nntp-timeout-time))
-  (signal 'quit nil))
+  ;; Do not timeout if the NSM query pane is active.
+  (unless (get-buffer "*Network Security Manager*")
+    (message "NNTP connection timed out (%d seconds)"
+	     mew-nntp-timeout-time)
+    (signal 'quit nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

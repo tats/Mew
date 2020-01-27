@@ -426,9 +426,8 @@
 		;; trustfiles is specified.
 		(trustfiles (mew-ssl-trustfiles case))
 		(verify-error nil)
-		;; Disable NSM query and set the level to 'low by
-		;; default.
-		(nsm-noninteractive t)
+		;; NSM level to 'low by default.
+		(nsm-noninteractive nil)
 		(network-security-level 'low))
 	    (when (> (mew-ssl-verify-level case) 0)
 	      ;; verify w/ trustfiles and w/ hostname.
@@ -562,7 +561,7 @@
       (setq sprt (mew-serv-to-port sprt)))
     (condition-case emsg
 	(progn
-	  (setq tm (run-at-time mew-smtp-timeout-time nil 'mew-smtp-timeout))
+	  (setq tm (run-at-time t mew-smtp-timeout-time 'mew-smtp-timeout))
 	  (message "Connecting to the SMTP server...")
 	  (setq pro (mew-open-network-stream pnm nil server sprt
 					     'smtp sslnp starttlsp case))
@@ -586,9 +585,11 @@
     pro))
 
 (defun mew-smtp-timeout ()
-  (message (format "SMTP connection timed out (%d seconds)"
-		   mew-smtp-timeout-time))
-  (signal 'quit nil))
+  ;; Do not timeout if the NSM query pane is active.
+  (unless (get-buffer "*Network Security Manager*")
+    (message "SMTP connection timed out (%d seconds)"
+	     mew-smtp-timeout-time)
+    (signal 'quit nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

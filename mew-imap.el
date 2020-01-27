@@ -1230,7 +1230,7 @@
 	pro tm)
     (condition-case emsg
 	(progn
-	  (setq tm (run-at-time mew-imap-timeout-time nil 'mew-imap-timeout))
+	  (setq tm (run-at-time t mew-imap-timeout-time 'mew-imap-timeout))
 	  (or no-msg (message "Connecting to the IMAP server..."))
 	  (setq pro (mew-open-network-stream pnm nil server sprt
 					     'imap sslnp starttlsp case))
@@ -1249,9 +1249,11 @@
     pro))
 
 (defun mew-imap-timeout ()
-  (message (format "IMAP connection timed out (%d seconds)"
-		   mew-imap-timeout-time))
-  (signal 'quit nil))
+  ;; Do not timeout if the NSM query pane is active.
+  (unless (get-buffer "*Network Security Manager*")
+    (message "IMAP connection timed out (%d seconds)"
+	     mew-imap-timeout-time)
+    (signal 'quit nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
