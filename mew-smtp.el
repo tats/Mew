@@ -656,7 +656,7 @@
 	 ((and sshsrv (null sshpro))
 	  (message "Cannot create to the SSH connection"))
 	 (sslnp
-	  (message "Cannot create to the SSL/TLS (GnuTLS) connection"))
+	  (message "Cannot open an SSL/TLS (GnuTLS) connection"))
 	 ((and sslp (null sslpro))
 	  (message "Cannot create to the SSL/TLS connection"))
 	 (t
