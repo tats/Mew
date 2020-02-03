@@ -1421,9 +1421,10 @@
 	(set-process-filter process 'mew-imap-filter)
 	(set-process-buffer process buf)
 	;;
-	(when (and sslnp starttlsp)
-	  ;; STARTTLS requires capability-command after the session is
-	  ;; upgraded to use TLS.
+	(when sslnp
+	  ;; GnuTLS requires a client-initiated command after the
+	  ;; session is established or upgraded to use TLS because
+	  ;; no additional greeting from the server.
 	  (mew-imap-set-status pnm "capability")
 	  (mew-imap-command-capability process pnm))
 	))))

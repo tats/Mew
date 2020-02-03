@@ -465,9 +465,10 @@
       (set-process-sentinel process 'mew-imap2-sentinel)
       (set-process-filter process 'mew-imap2-filter)
       (message "Copying in background...")
-      (when (and sslnp starttlsp)
-	;; STARTTLS requires capability-command after the session is
-	;; upgraded to use TLS.
+      (when sslnp
+	;; GnuTLS requires a client-initiated command after the
+	;; session is established or upgraded to use TLS because
+	;; no additional greeting from the server.
 	(mew-imap2-set-status pnm "capability")
 	(mew-imap2-command-capability process pnm))
       )))

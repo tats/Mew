@@ -580,6 +580,29 @@ is kept for further connections. This must be 't' for IMAP and NNTP."
   :type '(choice (const :tag "Native (GnuTLS)" native)
 		 (const :tag "External (stunnel)" tunnel)))
 
+;; XXX: the default value of gnutls-trustfiles can
+;; be different from the compile-time list.
+(defcustom mew-ssl-trustfiles nil
+  "List of CA buldle location filenames used by GnuTLS.
+nil - use the default list specified at compile time of the Emacs."
+  :group 'mew-net
+  :type '(choice (const :tag "System Default" nil)
+		 (repeat string)))
+
+(defcustom mew-ssl-algorithm-priority nil
+  "TLS priority string used by GnuTLS.
+nil - use the default specified by Emacs Network Security Manager."
+  :group 'mew-net
+  :type '(choice (const :tag "System Default" nil)
+		 (string :tag "Priority string")))
+
+(defcustom mew-ssl-client-keycert-list nil
+  "The client-side certificate used for TLS connection.
+'((\"keyfile\" \"certfile\")) - A list of key/cert pairs."
+  :group 'mew-net
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; SMTP
