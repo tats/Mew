@@ -12754,10 +12754,58 @@ variables.
 @vindex mew-ssl-verify-level
 
 @ifset ja
-執筆中
+GnuTLS が組み込まれた Emacs を使っている場合、TLS 機能を有効にするため
+の特別な設定は不要です。次の変数を設定することで、証明書の検証レベルと
+信頼するルート CA を変更することができます。
 @end ifset
 @ifset en
-TBW
+Mew requires no specific configuration to support TLS if you are using
+an Emacs built with GnuTLS library.  You can configure the certificate
+verification level and trusted root CAs by using the following
+variables.
+@end ifset
+
+@ifset ja
+証明書の検証レベルは、Emacs の Network Security Manager によって管理さ
+れているポリシーに従います。ポリシーを設定するには、
+@samp{network-security-level} という変数を使います。デフォルト値は
+@samp{'medium} です。@samp{'low} の場合、証明書を検証しません。
+@samp{'medium} の場合、ルート CA の証明書リストを使って証明書を検証し
+ます。検証ができなかった場合、もしくは自己署名証明書だった場合、その証
+明書を受け入れるかどうかのダイアログが表示されます。また、今まで証明書
+を使って暗号化通信が行なわれていたサーバに対して、暗号化なしでの接続が
+行なわれようとした場合にも、警告を表示します。@samp{'high} とすると、
+@samp{'medium} のチェックに加えて、サーバ証明書の鍵の変更や弱い暗号ス
+イートの使用に関して警告が表示されます。
+@end ifset
+@ifset en
+The policy for verification of the server certificates is handled by
+Emacs Network Security Manager.  It is configured by
+@samp{network-security-level}, and the default value is
+@samp{'medium}.  If it is set to @samp{'low}, no verification is
+performed.  If @samp{'medium}, NSM will check whether the certificate
+used to establish the identity of the server we're connecting to can
+be verified by using the specified root CA list.  A dialog for
+choosing whether the certificate should be accepted or not will be
+displayed if it is an invalid certificate including self-signed one.
+Also, if the connection is unencrypted, but it was encrypted in
+previous sessions, a similar dialog will be displayed.  @samp{'high}
+will perform additional checks such as a validated certificate which
+changes the public key and weak cipher/protocols.
+@end ifset
+
+@ifset ja
+信頼するルート CA は、@samp{mew-ssl-trustfiles} の設定に従います。ただし、
+GnuTLS には通常、デフォルトのルート CA リストが設定されており、Emacs
+26.3 とそれより前のバージョンでは、それが常に先頭に追加されます。リス
+トを空にしても、デフォルトのリストを無視できないことに注意してください。
+@end ifset
+@ifset en
+The trusted root CA list can be specified in
+@samp{mew-ssl-trustfiles}.  However, GnuTLS has the default list of
+the trusted files and they are always used first on Emacs version 26.3
+and prior.  Note that you cannot disable them even if you set an empty
+list to the variable.
 @end ifset
 
 @c %%%%%%%%%%%%%%%%%
