@@ -136,13 +136,13 @@ home page (http://www.Mew.org/).
 
 @ifset ja
 Mew とは、テキスト・メールやマルチメディア・メール(MIME)、ニュース、セ
-キュリティ機能(PGP、S/MIME、SSH、SSL)を便利に利用するためのユーザインター
+キュリティ機能(PGP、S/MIME、SSH、TLS)を便利に利用するためのユーザインター
 フェイスです。最新の検索サービスとも連動します。
 @end ifset
 @ifset en
 Mew is a user interface for text messages, multimedia messages (MIME),
 news articles and security functionality including PGP, S/MIME, SSH,
-and SSL. Also, Mew can work with the recent search services.
+and TLS. Also, Mew can work with the recent search services.
 @end ifset
 
 @ifset ja
@@ -11427,11 +11427,11 @@ POP サーバの名前。
 @item mew-pop-ssh-server
 POP を SSH 経由で取得する場合の SSH サーバの名前。
 @item mew-pop-ssl
-POP over SSL を使うか否か。@samp{'native} は GnuTLS
-を使った TLS/SSL 接続、@samp{'tunnel} は stunnel
-を使った TLS/SSL トンネル接続を意味する。
+POP over TLS を使うか否か。@samp{'native} は GnuTLS
+を使った TLS 接続、@samp{'tunnel} は stunnel
+を使った TLS トンネル接続を意味する。
 @item mew-pop-ssl-port
-POP over SSL のポート番号。
+POP over TLS のポート番号。
 @item mew-pop-user
 POP のアカウント名。初期値はログイン名。
 @item mew-pop-auth
@@ -11463,11 +11463,11 @@ The name of your POP server.
 @item mew-pop-ssh-server
 The name of SSH server which forwards the POP3 port.
 @item mew-pop-ssl
-If non-nil, POP connections are made over SSL.
+If non-nil, POP connections are made over TLS.
 @samp{'native} enables GnuTLS for native TLS connection
 and @samp{'tunnel} uses stunnel to establish a TLS tunnel.
 @item mew-pop-ssl-port
-The port for POP over SSL.
+The port for POP over TLS.
 @item mew-pop-user
 The user name on your POP server. The default is your login name.
 @item mew-pop-auth
@@ -11522,11 +11522,11 @@ IMAP サーバの名前。
 @item mew-imap-ssh-server
 IMAP を SSH 経由で取得する場合の SSH サーバの名前。
 @item mew-imap-ssl
-IMAP over SSL を使うか否か。@samp{'native} は GnuTLS
-を使った TLS/SSL 接続、@samp{'tunnel} は stunnel
-を使った TLS/SSL トンネル接続を意味する。
+IMAP over TLS を使うか否か。@samp{'native} は GnuTLS
+を使った TLS 接続、@samp{'tunnel} は stunnel
+を使った TLS トンネル接続を意味する。
 @item mew-imap-ssl-port
-IMAP over SSL のポート番号。
+IMAP over TLS のポート番号。
 @item mew-imap-user
 IMAP のアカウント名。初期値はログイン名。
 @item mew-imap-auth
@@ -11554,11 +11554,11 @@ The name of your IMAP server.
 @item mew-imap-ssh-server
 The name of SSH server which forwards the IMAP4 port.
 @item mew-imap-ssl
-If non-nil, IMAP connections are made over SSL.
+If non-nil, IMAP connections are made over TLS.
 @samp{'native} enables GnuTLS for native TLS connection
 and @samp{'tunnel} uses stunnel to establish a TLS tunnel.
 @item mew-imap-ssl-port
-The port for IMAP over SSL.
+The port for IMAP over TLS.
 @item mew-imap-user
 The user name on the IMAP server. The default is your login name.
 @item mew-imap-auth
@@ -11609,11 +11609,11 @@ NNTP サーバの名前。
 @item mew-nntp-ssh-server
 NNTP を SSH 経由で取得する場合の SSH サーバの名前。
 @item mew-nntp-ssl
-NNTP over SSL を使うか否か。@samp{'native} は GnuTLS
-を使った TLS/SSL 接続、@samp{'tunnel} は stunnel
-を使った TLS/SSL トンネル接続を意味する。
+NNTP over TLS を使うか否か。@samp{'native} は GnuTLS
+を使った TLS 接続、@samp{'tunnel} は stunnel
+を使った TLS トンネル接続を意味する。
 @item mew-nntp-ssl-port
-NNTP over SSL のポート番号。
+NNTP over TLS のポート番号。
 @item mew-nntp-user
 NNTP のアカウント名。もし @samp{nil} でなければ、認証の手続きが実行され
 る。(mew-nntp-auth という変数はないことに注意。)
@@ -11642,11 +11642,11 @@ The name of your NNTP server.
 @item mew-nntp-ssh-server
 The name of SSH server which forwards the NNTP port.
 @item mew-nntp-ssl
-If non-nil, NNTP connections are made over SSL.
+If non-nil, NNTP connections are made over TLS.
 @samp{'native} enables GnuTLS for native TLS connection
 and @samp{'tunnel} uses stunnel to establish a TLS tunnel.
 @item mew-nntp-ssl-port
-The port for NNTP over SSL.
+The port for NNTP over TLS.
 @item mew-nntp-user
 The user name on the NNTP server. If non-nil, authentication is used.
 (Note that mew-nntp-auth does not exist.)
@@ -11711,11 +11711,11 @@ SMTP サーバと接続する際に用いるアドレスファミリ。初期値
 @item mew-smtp-ssh-server
 SSH 経由でメッセージを送る際の SSH サーバの名前。
 @item mew-smtp-ssl
-SMTP over SSL を使うか否か。@samp{'native} は GnuTLS
-を使った TLS/SSL 接続、@samp{'tunnel} は stunnel
-を使った TLS/SSL トンネル接続を意味する。
+SMTP over TLS を使うか否か。@samp{'native} は GnuTLS
+を使った TLS 接続、@samp{'tunnel} は stunnel
+を使った TLS トンネル接続を意味する。
 @item mew-smtp-ssl-port
-SMTP over SSL のポート番号。
+SMTP over TLS のポート番号。
 @item mew-smtp-user
 SMTP AUTH で利用されるアカウント名。設定されない場合は、自動的にメール
 アドレスに設定される。
@@ -11750,11 +11750,11 @@ The address family to be used for the SMTP server.  The default value is 'ipv4.
 @item mew-smtp-ssh-server
 The name of SSH server which forwards the SMTP port.
 @item mew-smtp-ssl
-If non-nil, SMTP connections are made over SSL.
+If non-nil, SMTP connections are made over TLS.
 @samp{'native} enables GnuTLS for native TLS connection
 and @samp{'tunnel} uses stunnel to establish a TLS tunnel.
 @item mew-smtp-ssl-port
-The port for SMTP over SSL.
+The port for SMTP over TLS.
 @item mew-smtp-user
 The user name on your SMTP server. If not configured, your e-mail
 address is automatically set.
@@ -11830,10 +11830,10 @@ configure as follows:
 @end lisp
 
 @ifset ja
-SSL (@xref{SSL})や TLS (@xref{TLS}) の章も参考にして下さい。
+TLS/SSL (@xref{TLS/SSL}) の章も参考にして下さい。
 @end ifset
 @ifset en
-Please refer also to SSL (@pxref{SSL}) and TLS (@pxref{TLS}).
+Please refer also to TLS/SSL (@pxref{TLS/SSL}).
 @end ifset
 
 @ifset ja
@@ -12366,8 +12366,10 @@ configure as follows:
 * region::                      リージョン
 * visiting::                    移動
 * SSH::                         Secure SHell
-* SSL::                         Secure Socket Layer
-* TLS::                         Transport Layer Security
+* TLS/SSL::                     Transport Layer Security / Secure Socket Layer
+* Stunnel::                     Stunnel を使った TLS 接続
+* GnuTLS::                      GnuTLS ライブラリを使った TLS 接続
+* TLS/SSL2::                    TLS 接続のための変数設定
 * spam::                        スパム
 * spam2::                       スパム(2)
 * addr-warn::                   アドレスの警告
@@ -12378,8 +12380,10 @@ configure as follows:
 * region::                      Region
 * visiting::                    Visiting another buffer
 * SSH::                         Secure SHell
-* SSL::                         Secure Socket Layer
-* TLS::                         Transport Layer Security
+* TLS/SSL::                     Transport Layer Security / Secure Socket Layer
+* Stunnel::                     TLS by Stunnel
+* GnuTLS::                      TLS by GnuTLS library
+* TLS/SSL2::                    Configuration Variables for TLS
 * spam::                        Spam messages
 * spam2::                       Spam messages (2)
 * addr-warn::                   Warning addresses
@@ -12488,7 +12492,7 @@ name is the smallest number, type @samp{C-cC-o}.
 @end ifset
 
 @c %%%%%%%%%%%%%%%%%
-@node SSH, SSL, visiting, Tips
+@node SSH, TLS/SSL, visiting, Tips
 @ifset ja
 @section Secure SHell
 @end ifset
@@ -12534,53 +12538,99 @@ in the mode line.
 @end ifset
 
 @ifset ja
-Mew の実装では、SSH と SSL/TLS を同時には使えません。SSH トンネルの中で
-SSL/TLS を使う必要がある場合、Mew では SSL/TLS だけを設定し、SSH トンネ
+Mew の実装では、SSH と TLS を同時には使えません。SSH トンネルの中で
+TLS を使う必要がある場合、Mew では TLS だけを設定し、SSH トンネ
 ルはコマンドラインから張るようにして下さい。
 @end ifset
 @ifset en
-The implementation of Mew does not allow to use both SSH and SSL/TLS
-at the same time. If you need to use SSL/TLS over an SSH tunnel,
-please configure SSL/TLS only with Mew and set up an SSH tunnel on a
+The implementation of Mew does not allow to use both SSH and TLS
+at the same time. If you need to use TLS over an SSH tunnel,
+please configure TLS only with Mew and set up an SSH tunnel on a
 command line.
 @end ifset
 
 @c %%%%%%%%%%%%%%%%%
-@node SSL, TLS, SSH, Tips
+@node TLS/SSL, Stunnel, SSH, Tips
 @ifset ja
-@section Secure Socket Layer
+@section Transport Layer Security / Secure Socket Layer
 @end ifset
 @ifset en
-@section Secure Socket Layer
+@section Transport Layer Security / Secure Socket Layer
+@end ifset
+
+@ifset ja
+Mew は、通信の秘匿性と完全性を保証するために、TCP 通信路の暗号化を行な
+う TLS (Transport Layer Security) に対応しています。
+この機能を使うには、Emacs に GnuTLS ライブラリが組み込まれているか、
+外部プログラムとして "stunnel" バージョン 3、4、5 のいずれかが必要です。
+@end ifset
+@ifset en
+Mew supports TLS (Transport Layer Security) for confidentiality and
+integrity of TCP transport.  To use this feature, Emacs built with
+GnuTLS library or a ``stunnel'' program version 3, 4, or 5 is required.
+@end ifset
+
+@ifset ja
+TLS プロトコルは、Netscape Communications 社が 1990 年代に開発した SSL
+(Secure Socket Layer) の後継として規格化されたものです。
+2 つのプロトコルには互換性があり、
+GnuTLS や ``stunnel'' プログラムは TLS と SSL の両方に対応しています。
+しかし、2020 年の時点で SSL には多数の脆弱性が発見されており、
+SSL の使用は避けて TLS のみを使用すべきだと考えられています。
+@end ifset
+@ifset en
+SSL (Secure Socket Layer) was developed by Netscape Communications,
+Inc. back in 1990s and TLS has been developed as the successor.  While
+these two protocols are compatible with each other in some degree, and
+GnuTLS and ``stunnel'' support the both, as of 2020, SSL is considered
+as a ``should not use'' protocol because a lot of security flaws were
+found in the protocol.
+@end ifset
+
+@ifset ja
+TLS 機能の設定に用いる Mew の設定変数や関数の名前には、 ``ssl'' が含ま
+れているものがあります。混乱しやすいですが、このような歴史的な理由によ
+るものです。
+@end ifset
+@ifset en
+For this histrical reason, there are still variables and functions for
+TLS functionality with ``ssl'' keyword in Mew.
+@end ifset
+
+@ifset ja
+TLS を有効にするには、stunnel もしくは GnuTLS ライブラリのための変数設
+定を行ない、次に各プロトコルについて TLS を有効にするかどうかの設定を
+行ないます。
+@end ifset
+@ifset en
+To enable TLS functionality, you have to configure variables for
+``stunnel'' program or GnuTLS library, and then ones for enabling TLS
+of each supported protocols.
+@end ifset
+
+@c %%%%%%%%%%%%%%%%%
+@node Stunnel, GnuTLS, TLS/SSL, Tips
+@ifset ja
+@section Stunnel を使った TLS 接続
+@end ifset
+@ifset en
+@section TLS by Stunnel
 @end ifset
 @vindex mew-ssl-cert-directory
 @vindex mew-ssl-verify-level
-@vindex mew-pop-ssl
-@vindex mew-pop-ssl-port
-@vindex mew-smtp-ssl
 
 @ifset ja
-SSL を使うには、認証局方式の信用モデルを理解している必要があります。
-Mew は SSL のために、"stunnel" バージョン 3、4、5、もしくは GnuTLS
-をサポートしています。GnuTLS を使うためには、Emacs に GnuTLS
-ライブラリが組み込まれている必要があります。
-@end ifset
-@ifset en
-Before you use SSL, you should understand the trust model of
-certificate authorities (CA).  For SSL, Mew supports "stunnel" version
-3, 4 and 5, and GnuTLS.  Note that GnuTLS requires an Emacs built with
-GnuTLS library.
-@end ifset
-
-@ifset ja
-Mew で利用する前に、SSL サーバに対して "stunnel" で SSL のコネクション
+Mew で利用する前に、TLS サーバに対して "stunnel" で TLS のコネクション
 が張れるか確かめて下さい。"stunnel" は、"openssl" のライブラリをリンク
 しているので、"openssl" の知識が必要です。
+また、TLS を使うには、認証局方式の信用モデルを理解している必要があります。
 @end ifset
 @ifset en
-Before you use Mew with SSL, you must be sure that an SSL connection
-can be established to your SSL server. Since "stunnel" is linked to
+Before you use Mew with TLS, you must be sure that an TLS connection
+can be established to your TLS server. Since "stunnel" is linked to
 the "openssl" library, you should understand "openssl".
+Before you use TLS, you should understand the trust model of
+certificate authorities (CA).  
 @end ifset
 
 @ifset ja
@@ -12622,18 +12672,20 @@ To copy the certificate, do as follows:
 @ifset ja
 "openssl" に付いてくる証明書は、世の中で使われている CA すべてを網羅で
 きていません。あなたが利用するサーバの証明書が、他の CA から発行された
-場合、その CA の証明書を同様にコピーしておく必要があります。以下のペー
-ジに CA の証明書がたくさん置いてあります。
+場合、その CA の証明書を同様にコピーしておく必要があります。インターネッ
+トにおいて信頼されている CA の証明書は、次の URLで管理・公開されていま
+す。
 @end ifset
 @ifset en
 The certificates in the source of "openssl" do not cover all CAs. If
-the certificate of your SSL server is signed by another CA, you must
-copy the certificate of the CA to the directory. You may be able to
-find appropriate certificate from the following page:
+the certificate of your TLS server is signed by another CA, you must
+copy the certificate of the CA to the directory. You can find trusted
+CA certificates on Internet from the following URLs:
 @end ifset
 
 @example
-http://www.columbia.edu/~ariel/good-certs/ns45/
+https://www.ccadb.org
+https://www.mozilla.org/en-US/about/governance/policies/security-group/certs/
 @end example
 
 @ifset ja
@@ -12656,11 +12708,11 @@ It's default to 1. The meanings of the values are as follows:
 @item 0
 検証しない
 @item 1
-サーバの証明書があれば検証する。検証結果が失敗なら、SSL/TSL コネクショ
-ンは作られない。証明書がなければ、SSL/TLS コネクションを作成する。
+サーバの証明書があれば検証する。検証結果が失敗なら、TLS コネクショ
+ンは作られない。証明書がなければ、TLS コネクションを作成する。
 @item 2
-サーバの証明書を検証する。検証結果が失敗なら、SSL/TSL コネクションは作
-られない。証明書がなければ、SSL/TLS コネクションを作成しない。
+サーバの証明書を検証する。検証結果が失敗なら、TLS コネクションは作
+られない。証明書がなければ、TLS コネクションを作成しない。
 @item 3
 サーバが送ってきたものではなく、ローカルにインストールされている証明書
 で検証する。
@@ -12670,11 +12722,11 @@ It's default to 1. The meanings of the values are as follows:
 No verification.
 @item 1
 Verify server's certificate if present. If verification failed, an
-SSL/TLS connection is not created. If not present, an SSL/TLS
+TLS connection is not created. If not present, a TLS
 connection is created.
 @item 2
-Verify server's certificate. If verification failed, an SSL/TLS
-connection is not created. If not present, an SSL/TLS connection is
+Verify server's certificate. If verification failed, a TLS
+connection is not created. If not present, a TLS connection is
 not created.
 @item 3 
 Verify server's certificate which locally installed (not one from the
@@ -12683,9 +12735,51 @@ server).
 @end table
 
 @ifset ja
-後は各プロトコルの SSL に関する変数を設定して下しさい。たとえば、POP
-over SSL を利用するには、@samp{mew-pop-ssl} を @samp{t} にします。
-SSL の実装として stunnel もしくは GnuTLS を明示的に指定したい場合は、
+変数を設定したら、stunnel を使う準備は完了です。
+@end ifset
+@ifset en
+You can get started with using stunnel after configuring the
+variables.
+@end ifset
+
+@c %%%%%%%%%%%%%%%%%
+@node GnuTLS, TLS/SSL2, Stunnel, Tips
+@ifset ja
+@section GnuTLS ライブラリを使った TLS 接続
+@end ifset
+@ifset en
+@section TLS by GnuTLS Library
+@end ifset
+@vindex mew-ssl-trustfiles
+@vindex mew-ssl-verify-level
+
+@ifset ja
+執筆中
+@end ifset
+@ifset en
+TBW
+@end ifset
+
+@c %%%%%%%%%%%%%%%%%
+@node TLS/SSL2, spam, GnuTLS, Tips
+@ifset ja
+@section TLS 接続のための変数設定
+@end ifset
+@ifset en
+@section Configuration Variables for TLS
+@end ifset
+@vindex mew-ssl-default
+@vindex mew-pop-ssl
+@vindex mew-pop-ssl-port
+@vindex mew-smtp-ssl
+@vindex mew-smtp-ssl-port
+@vindex mew-nntp-ssl
+@vindex mew-nntp-ssl-port
+
+@ifset ja
+次に各プロトコルの TLS に関する変数を設定して下さい。たとえば、POP
+over TLS を利用するには、@samp{mew-pop-ssl} を @samp{t} にします。
+TLS の実装として stunnel もしくは GnuTLS を明示的に指定したい場合は、
 それぞれ @samp{'tunnel}, @samp{'native} を指定します。
 @samp{t} を設定したプロトコルについては、
 @samp{mew-ssl-default} を使って使用する実装を選択することが可能です。
@@ -12694,12 +12788,12 @@ SSL の実装として stunnel もしくは GnuTLS を明示的に指定した�
 さい。
 @end ifset
 @ifset en
-Then configure SSL-related variables of each protocol. For example, if
-you want to use POP over SSL, set @samp{mew-pop-ssl} to @samp{t}.
-To specify the SSL implementation, @samp{'tunnel} or @samp{'native}
+Then configure TLS-related variables of each protocol. For example, if
+you want to use POP over TLS, set @samp{mew-pop-ssl} to @samp{t}.
+To specify the TLS implementation, @samp{'tunnel} or @samp{'native}
 can be used instead of @samp{t} for stunnel or GnuTLS, respectively.
 For protocols with @samp{t}, the value of @samp{mew-ssl-default}
-is used as the default SSL implementation.
+is used as the default TLS implementation.
 Also, if its port is not a standard one, configure
 @samp{mew-pop-ssl-port}.
 @end ifset
@@ -12709,10 +12803,10 @@ Also, if its port is not a standard one, configure
 @end lisp
 
 @ifset ja
-SMTP で SSL を利用する場合は、以下のようにします。
+SMTP で TLS を利用する場合は、以下のようにします。
 @end ifset
 @ifset en
-To use SSL for SMTP, configure as follows:
+To use TLS for SMTP, configure as follows:
 @end ifset
 
 @lisp
@@ -12720,40 +12814,33 @@ To use SSL for SMTP, configure as follows:
 @end lisp
 
 @ifset ja
-SSL で通信が保護されている場合、モードラインに錠前の絵が表示されます。
+TLS で通信が保護されている場合、モードラインに錠前の絵が表示されます。
 @end ifset
 @ifset en
-While a connection is protected by SSL, a picture of a lock is shown
+While a connection is protected by TLS, a picture of a lock is shown
 in the mode line.
 @end ifset
 
-@c %%%%%%%%%%%%%%%%%
-@node TLS, spam, SSL, Tips
 @ifset ja
-@section Transport Layer Security
+Mew では、各プロトコルの STARTTLS 拡張を使い、TCP 接続の確立後に
+TLS を有効にすることもできます。STARTTLS を利用したい場合、ますは
+@xref{TLS/SSL} の説明に従って設定して下さい。
 @end ifset
 @ifset en
-@section Transport Layer Security
+Mew can upgrade a plain TCP connection to a TLS connection by using
+STARTTLS extension in each supported protocols.  Before using this,
+you have to configure variables according to @ref{TLS/SSL}.
 @end ifset
 
 @ifset ja
-Mew では SSL の代りに TLS を利用することもできます。TLS の実現は、SSL
-と同様 "stunnel" に頼っています。ですので、TLS を利用する際には、
-@xref{SSL} の説明に従って設定して下さい。
+STARTTLS は、プロトコルの通常のポート番号と TLS 用のポート番号とを
+一致するように設定することで有効になります。たとえば、POP では以下のよ
+うにします。
 @end ifset
 @ifset en
-Mew can use TLS instead of SSL. To enable TLS, Mew relies on
-@w{"}stunnel", too. So, before using TLS, you should configure
-according to the explanations in @ref{SSL}.
-@end ifset
-
-@ifset ja
-次に、SSL のポート番号を守りたいプロトコルと同じポート番号に設定します。
-たとえば、POP では以下のようにします。
-@end ifset
-@ifset en
-Then, set the SSL port to the same one of the protocol to be
-protected. For instance, configure as follows for POP:
+STARTTLS will be enabled when the port number for normal TCP
+connections of the protocol is set to the same as the port number for
+TLS connections.  Configure as follows for POP, for instance:
 @end ifset
 
 @lisp
@@ -12763,19 +12850,10 @@ protected. For instance, configure as follows for POP:
 @end lisp
 
 @ifset ja
-すなわち、SSL のポート番号と保護したいプロトコルのポートが同じであれば
-TLS、異なれば SSL が利用されます。
+以下は、Message Submission で STARTTLS を有効にするための設定例です。
 @end ifset
 @ifset en
-That is, if the SSL port is the same as the port of the protocol to be
-protected, TLS is used. Otherwise, SSL is used.
-@end ifset
-
-@ifset ja
-以下は、Message Submission を TLS で守るための設定例です。
-@end ifset
-@ifset en
-The following is an example to protect Message Submission with TLS.
+The following is an example to enable STARTTLS for Message Submission.
 @end ifset
 
 @lisp
@@ -12785,7 +12863,7 @@ The following is an example to protect Message Submission with TLS.
 @end lisp
 
 @c %%%%%%%%%%%%%%%%%
-@node spam, spam2, TLS, Tips
+@node spam, spam2, TLS/SSL2, Tips
 @ifset ja
 @section スパム
 @end ifset
