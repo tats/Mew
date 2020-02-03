@@ -398,15 +398,23 @@
 (setq mew--advice-tls-parameters-plist nil)
 (defun mew--advice-filter-args-gnutls-negotiate (&rest args)
   (nconc (car args) mew--advice-tls-parameters-plist))
+;;;
+;;; XXX: This conditional can be removed safely.
 (if (fboundp 'make-network-process)
     (defun mew-open-network-stream (name buf server port proto sslnp
 					 starttlsp case)
-      (let (family nowait pro tlsparams)
+      (let ((status-msg (format "Opening a %s connection %s%s..."
+				(if sslnp "TLS" "TCP")
+				(if sslnp "(GnuTLS" "")
+				(if sslnp
+				    (if starttlsp ", STARTTLS)" ")")
+				  "")))
+	    family nowait pro tlsparams)
 	;; SMTP-specific
 	(when (and (eq proto 'smtp) mew-inherit-submission)
 	  (setq family mew-smtp-submission-family)
 	  (setq nowait t))
-	;; TLS does not work for Unix-domain socket
+	;; TLS does not work for Unix-domain socket for now.
 	(when (and (not sslnp)
 		   (stringp port) (string-match "^/" port))
 	  (setq family 'local)
@@ -418,7 +426,8 @@
 	  (setq pro
 		(list nil
 		      :error t
-		      :status-msg "Opening a TLS connection (GnuTLS)...FAILED (GnuTLS not available)")))
+		      :status-msg
+		      (concat status-msg "FAILED (GnuTLS not available)"))))
 	 ((and sslnp)
 	  (let ((hostname (puny-encode-domain server))
 		;; Note: on Emacs 26.3 and prior GnuTLS always uses
@@ -431,15 +440,13 @@
 		(network-security-level 'low))
 	    (when (> (mew-ssl-verify-level case) 0)
 	      ;; verify w/ trustfiles and w/ hostname.
-	      (setq network-security-level 'medium)
 	      ;;
 	      ;; Note: do not set verify-error directly when
 	      ;; (open-network-stream) (i.e. starttlsp) because the
 	      ;; certificate validation will be checked in NSM, not
 	      ;; upon (make-network-process) in (open-network-stream).
 	      ;;
-	      (when (not starttlsp)
-		(setq verify-error (list :trustfiles :hostname))))
+	      (setq network-security-level 'medium))
 	    (setq tlsparams
 		  (cons 'gnutls-x509pki
 			(gnutls-boot-parameters
@@ -451,87 +458,71 @@
 			 :verify-error verify-error
 			 :hostname hostname)))
 	    ;; debug output: TLS params
-	    (when (mew-debug 'net)
-	      (with-current-buffer (get-buffer-create mew-buffer-debug)
-		(goto-char (point-max))
-		(insert
-		 (format "\n<%s>\n%s\n"
-			 (format "TLS proto=%s, server=%s:%s, starttlsp=%s, verify-level=%s"
-				 proto hostname port starttlsp (mew-ssl-verify-level case))
-			 (format "nowait=%s, tlsparams=%s"
-				 nowait
-				 (mapconcat 'identity
-					    (mapcar (lambda (a) (format "%s" a))
-						    (cdr tlsparams)) " "))))))
-	    (if starttlsp
-		(with-temp-message "Opening a TLS connection (GnuTLS, STARTTLS)..."
-		  ;; XXX: (open-network-stream) does not pass
-		  ;; tlsparams to (gnutls-negotiate) to start
-		  ;; STARTTLS.  As a workaround, add an advice to
-		  ;; forcibly append the parameters.  This should be
-		  ;; fixed in (open-network-stream).
-		  (setq mew--advice-tls-parameters-plist (cdr tlsparams))
-		  (advice-add 'gnutls-negotiate
-			      :filter-args #'mew--advice-filter-args-gnutls-negotiate)
-		  (setq pro (open-network-stream
-			     name buf server port
-			     :type 'starttls
-			     :return-list t
-			     :nowait nowait
-			     :always-query-capabilities
-			     (mew-starttls-get-param proto :always-query-capabilities nil)
-			     :capability-command
-			     (mew-starttls-get-param proto :capability-command t)
-			     :end-of-capability
-			     (mew-starttls-get-param proto :end-of-capability t)
-			     :end-of-command
-			     (mew-starttls-get-param proto :end-of-command t)
-			     :success
-			     (mew-starttls-get-param proto :success t)
-			     :starttls-function
-			     (mew-starttls-get-param proto :starttls-function nil)))
-		  (advice-remove 'gnutls-negotiate
-				 #'mew--advice-filter-args-gnutls-negotiate)
-		  ;;
-		  ;; When a validation error occurs, (car pro) will be nil.
-		  ;;
-		  (let ((plainp (eq 'plain (plist-get (cdr pro) :type)))
-			(openp  (and (car pro)
-				     (eq 'open (process-status (car pro)))))
-			;; Falling back to a plain connection is
-			;; allowed only when verify-level < 2.
-			(needtlsp (> (mew-ssl-verify-level case) 1)))
-		    (cond
-		     ((not openp)
-		      (let ((msg (plist-get (cdr pro) :error)))
-			(setq pro (list nil
-					:error t
-					:status-msg
-					(format
-					 "Opening a TLS connection (GnuTLS, STARTTLS)...FAILED: %s"
-					 msg)))))
-		     ((and plainp needtlsp)
-		      (delete-process (car pro))
+	    (funcall (intern (concat "mew-" (symbol-name proto) "-debug"))
+		     (format "TLS proto=%s, server=%s:%s, starttlsp=%s"
+			     proto hostname port starttlsp)
+		     (format "verify-level=%s, network-security-level=%s, nowait=%s, tlsparams=%s"
+			     (mew-ssl-verify-level case) network-security-level
+			     nowait
+			     (apply #'concat (mapcar (lambda (a) (format "%s " a)) tlsparams))))
+	    (let ((type (if starttlsp 'starttls 'tls)))
+	      (with-temp-message status-msg
+		;; XXX: (open-network-stream) does not pass
+		;; tlsparams to (gnutls-negotiate) to start
+		;; STARTTLS.  As a workaround, add an advice to
+		;; forcibly append the parameters.  This should be
+		;; fixed in (open-network-stream).
+		(setq mew--advice-tls-parameters-plist (cdr tlsparams))
+		(advice-add 'gnutls-negotiate
+			    :filter-args #'mew--advice-filter-args-gnutls-negotiate)
+		(setq pro (open-network-stream
+			   name buf server port
+			   :type type
+			   :return-list t
+			   :nowait nowait
+			   :always-query-capabilities
+			   (mew-starttls-get-param proto :always-query-capabilities nil)
+			   :capability-command
+			   (mew-starttls-get-param proto :capability-command t)
+			   :end-of-capability
+			   (mew-starttls-get-param proto :end-of-capability t)
+			   :end-of-command
+			   (mew-starttls-get-param proto :end-of-command t)
+			   :success
+			   (mew-starttls-get-param proto :success t)
+			   :starttls-function
+			   (mew-starttls-get-param proto :starttls-function nil)))
+		(advice-remove 'gnutls-negotiate
+			       #'mew--advice-filter-args-gnutls-negotiate)
+		;;
+		;; When a validation error occurs, (car pro) will be nil.
+		;;
+		(let ((plainp (eq 'plain (plist-get (cdr pro) :type)))
+		      (openp  (and (car pro)
+				   (eq 'open (process-status (car pro)))))
+		      ;; Falling back to a plain connection is
+		      ;; allowed only when verify-level < 2.
+		      (needtlsp (and starttlsp
+				     (> (mew-ssl-verify-level case) 1))))
+		  (cond
+		   ((not openp)
+		    (let ((msg (plist-get (cdr pro) :error)))
 		      (setq pro (list nil
 				      :error t
-				      :status-msg "Opening a TLS connection (GnuTLS, STARTTLS)...FAILED")))
-		     (t
-		      (setq pro (list
-				 (car pro)
-				 :error nil))))))
-	      (with-temp-message "Opening a TLS connection (GnuTLS)..."
-		(setq pro
-		      (list (make-network-process :name name :buffer buf
-						  :host hostname
-						  :service (mew-serv-to-port port)
-						  :family family :nowait nowait
-						  :tls-parameters tlsparams)
-			    :greeting nil
-			    :capabilities nil
-			    :type 'tls
-			    :error nil))))))
+				      :status-msg
+				      (concat status-msg "FAILED: " msg)))))
+		   ((and plainp needtlsp)
+		    (delete-process (car pro))
+		    (setq pro (list nil
+				    :error t
+				    :status-msg
+				    (concat status-msg "FAILED"))))
+		   (t
+		    (setq pro (list
+			       (car pro)
+			       :error nil)))))))))
 	 (t
-	  (with-temp-message "Opening a TCP connection..."
+	  (with-temp-message status-msg
 	    (let ((params (list :name name :buffer buf
 				:service port :family family
 				:nowait nowait))
@@ -694,9 +685,10 @@
       (set-process-filter process 'mew-smtp-filter)
       (message "Sending in background...")
       ;;
-      (when (and sslnp starttlsp)
-	;; STARTTLS requires capability-command after the session is
-	;; upgraded to use TLS.
+      (when sslnp
+	;; GnuTLS requires a client-initiated command after the
+	;; session is established or upgraded to use TLS because
+	;; no additional greeting from the server.
 	(mew-smtp-set-status pnm "ehlo")
 	(mew-smtp-command-ehlo process pnm))
       )))
