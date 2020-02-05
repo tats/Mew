@@ -366,7 +366,7 @@
 	pro tm)
     (condition-case emsg
 	(progn
-	  (setq tm (run-at-time t mew-imap-timeout-time 'mew-imap2-timeout))
+	  (setq tm (run-at-time mew-imap-timeout-time nil 'mew-imap2-timeout))
 	  (message "Connecting to the IMAP server...")
 	  (setq pro (mew-open-network-stream pnm nil server sprt
 					     'imap sslnp starttlsp case))

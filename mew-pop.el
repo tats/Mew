@@ -616,7 +616,7 @@
 	pro tm)
     (condition-case emsg
 	(progn
-	  (setq tm (run-at-time t mew-pop-timeout-time 'mew-pop-timeout))
+	  (setq tm (run-at-time mew-pop-timeout-time nil 'mew-pop-timeout))
 	  (or no-msg (message "Connecting to the POP server..."))
 	  (setq pro (mew-open-network-stream pnm nil server sprt
 					     'pop sslnp starttlsp case))
