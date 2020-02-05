@@ -552,7 +552,7 @@
       (setq sprt (mew-serv-to-port sprt)))
     (condition-case emsg
 	(progn
-	  (setq tm (run-at-time t mew-smtp-timeout-time 'mew-smtp-timeout))
+	  (setq tm (run-at-time mew-smtp-timeout-time nil 'mew-smtp-timeout))
 	  (message "Connecting to the SMTP server...")
 	  (setq pro (mew-open-network-stream pnm nil server sprt
 					     'smtp sslnp starttlsp case))

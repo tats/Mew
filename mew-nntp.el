@@ -394,7 +394,7 @@
 	pro tm)
     (condition-case emsg
 	(progn
-	  (setq tm (run-at-time t mew-nntp-timeout-time 'mew-nntp-timeout))
+	  (setq tm (run-at-time mew-nntp-timeout-time nil 'mew-nntp-timeout))
 	  (or no-msg (message "Connecting to the NNTP server..."))
 	  (setq pro (mew-open-network-stream pnm nil server sprt
 					     'nntp sslnp starttlsp case))
