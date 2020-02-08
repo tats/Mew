@@ -12825,43 +12825,45 @@ will be no change with @samp{network-security-level} when
 
 @ifset ja
 GnuTLS には、証明書の検証方法を制御するための
-@samp{gnutls-verify-error} という変数もあります。この変数は TCP 接続時
-に証明書の検証を行なうかどうかを制御するもので、デフォルトでは
-@samp{nil} に設定されています。したがって TCP 接続時には検証されません
-が、TCP 接続の確立後に前述の NSM によって検証が行なわれます。証明書を
-検証しない設定がデフォルトとなっていることは奇妙に思われるかも知れませ
-んが、Emacs で GnuTLS が標準的に行なう検証よりも多くの項目をチェックで
-きるようにするため、TCP 接続と検証処理を分離しています。
+@samp{gnutls-verify-error} という変数もあります。GnuTLS は TCP 接続の
+確立時に証明書の検証を行ないますが、この変数は、検証に失敗した時に切断
+するかどうかを制御します。デフォルトでは @samp{nil} に設定されており、
+検証に失敗してもすぐには切断しません。前述の Network Security Manager
+が、TCP 接続の確立後にチェックを行ない、切断するかどうかを決定します。
+すぐに切断しない設定がデフォルトとなっていることは奇妙に思われるかも知
+れませんが、Emacs で GnuTLS が標準的に行なう検証よりも多くの項目をチェッ
+クできるようにするため、TCP 接続と検証処理を分離しています。
 @end ifset
 @ifset en
 GnuTLS has own variable, @samp{gnutls-verify-error}, to configure the
-verification level.  This variable controls if the server certificates
-are verified or not upon the TCP connection established.  The default
-value is @samp{nil}, which means no verification when the TCP
-connection is established and NSM will perform the verification.  You
-might think it is a bit odd that the default value of this variable is
-set to @samp{nil}.  This is because Emacs itself will check more
-details of the certificates than GnuTLS does.  For this reason,
-establishing a TCP connection and verification of the server
-certifiicates are separated.
+verification level.  This variable controls if the TCP connection must
+be disconnected or not if verification of the server certificates
+failed upon the connection established.  The default value is
+@samp{nil}, which means connection will not be closed immediately even
+when the verification fails.  In this case, NSM will perform the
+verification and decides whether the connection should be disconnected
+or not.  You might think it is a bit odd that the default value of
+this variable is set to @samp{nil}.  This is because Emacs itself will
+check more details of the certificates and the connection than GnuTLS
+does.  For this reason, establishing a TCP connection and decision on
+disconnect are separated.
 @end ifset
 
 @ifset ja
-@samp{gnutls-verify-error} を手動で設定した場合、TCP 接続の確立時に設
-定にしたがって証明書の検証が行なわれます。検証に失敗した場合は接続が切
-断されるため、NSM による検証は行なわれません。その場合、
-@samp{network-security-level} や @samp{mew-ssl-verify-level} による設
-定は無効になりますので、注意して下さい。特別な理由がない限り、
-@samp{gnutls-verify-error} ではなく @samp{network-security-level} を使っ
-て設定することをお勧めします。
+@samp{gnutls-verify-error} を手動で設定した場合、TCP 接続の確立時に証
+明書の検証に失敗すると、すぐに接続が切断されます。NSM による検証は行な
+われません。この場合、@samp{network-security-level} や
+@samp{mew-ssl-verify-level} による設定は無効になりますので注意して下さ
+い。特別な理由がない限り、@samp{gnutls-verify-error} ではなく
+@samp{network-security-level} を使って設定することをお勧めします。
 @end ifset
 @ifset en
-If you set @samp{gnutls-verify-error} manually, GnuTLS will verify the
-server certificates when the TCP connection established based on the
-value.  If fails, the connection will be terminated and no further
-verification by NSM will not be performed.  Note that configurations
-by using @samp{network-security-level} or @samp{mew-ssl-verify-level}
-will be ignored in this case.  It is recommended to use
+If you set @samp{gnutls-verify-error} manually, GnuTLS will terminate
+the TCP session when the verification of the server certificates
+fails.  In this case, no further verification by NSM will be
+performed.  Note that configurations by using
+@samp{network-security-level} or @samp{mew-ssl-verify-level} will be
+ignored in this case.  It is recommended to use
 @samp{network-security-level} over @samp{gnutls-verify-error} unless
 you have a specific reason.
 @end ifset
