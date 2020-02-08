@@ -434,19 +434,16 @@
 		;; the system-wide default path first even if
 		;; trustfiles is specified.
 		(trustfiles (mew-ssl-trustfiles case))
+		;; Defer verification to NSM.  Note that
+		;; gnutls-verify-error overrides verify-error when it
+		;; is nil.  Setting gnutls-verify-error to t is
+		;; discouraged.
 		(verify-error nil)
-		;; NSM level to 'low by default.
 		(nsm-noninteractive nil)
-		(network-security-level 'low))
-	    (when (> (mew-ssl-verify-level case) 0)
-	      ;; verify w/ trustfiles and w/ hostname.
-	      ;;
-	      ;; Note: do not set verify-error directly when
-	      ;; (open-network-stream) (i.e. starttlsp) because the
-	      ;; certificate validation will be checked in NSM, not
-	      ;; upon (make-network-process) in (open-network-stream).
-	      ;;
-	      (setq network-security-level 'medium))
+		(network-security-level network-security-level))
+	    (when (eq (mew-ssl-verify-level case) 0)
+	      ;; Forcibly disable verification.
+	      (setq network-security-level 'low))
 	    (setq tlsparams
 		  (cons 'gnutls-x509pki
 			(gnutls-boot-parameters
