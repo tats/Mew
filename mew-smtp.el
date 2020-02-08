@@ -9,7 +9,8 @@
 (autoload 'puny-encode-domain "puny")
 (when (and (fboundp 'gnutls-available-p)
 	   (gnutls-available-p))
-  (require 'gnutls))
+  (require 'gnutls)
+  (require 'nsm))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
