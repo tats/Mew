@@ -451,9 +451,9 @@
 			 :type 'gnutls-x509pki
 			 :keylist (mew-ssl-client-keycert-list case)
 			 :trustfiles (mew-ssl-trustfiles case)
-			 :priority (mew-ssl-algorithm-priority case)
-			 :min-prime-bits mew-ssl-native-min-prime-bits
-			 :verify-error verify-error
+			 :priority-string (mew-ssl-algorithm-priority case)
+			 :min-prime-bits mew-ssl-min-prime-bits
+			 :verify-error mew-ssl-verify-error
 			 :hostname hostname)))
 	    ;; debug output: TLS params
 	    (funcall (intern (concat "mew-" (symbol-name proto) "-debug"))

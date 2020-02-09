@@ -14,8 +14,11 @@
 (defun mew-ssl-starttls-p (type port sslport)
   "Return if STARTTLS should be used or not"
   (and type (mew-port-equal port sslport)))
-(defvar mew-ssl-native-min-prime-bits 2048
+(defvar mew-ssl-min-prime-bits 2048
   "Default prime bits for GnuTLS connection.")
+(defvar mew-ssl-verify-error nil
+  "verify-error parameter passed to GnuTLS.  You might want to
+keep this as nil.")
 (defvar mew-ssl-native-starttls-plist
   '(
     ;; RFC 3207
