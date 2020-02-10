@@ -905,16 +905,24 @@ Mew のマスターパスワード機能は Mew 独自のものですが、Emacs
 auth-source と呼ばれるパスワードマネージャが含まれています。
 auth-source は .netrc 形式のテキストファイル、GNOME Keyring, macOS
 Keychain といった、プラットフォームが提供するパスワード保存機能にも対
-応しています。auth-source を使用するには、マスターパスワードを使用する
-設定に加えて、次のように設定します。
+応しています。
 @end ifset
 @ifset en
 While the master password feature is one of the feature of Mew, Emacs
 supports ``auth-source'' password manager.  Auth-source is similar to
 Mew's master password but supports variety of platform-dependent
 password stores including .netrc-style plain text, GNOME Keyring, and
-macOS Keychain.  To enable auth-source, configure the following
-variable:
+macOS Keychain.
+@end ifset
+
+@ifset ja
+Mew の auth-source 対応は、まだ実験的なものです。
+auth-source を試すには、マスターパスワードを使用する
+設定に加えて、次のように設定します。
+@end ifset
+@ifset en
+Note that support for auth-source is still experimental.
+To try auth-source, configure the following variable:
 @end ifset
 
 @lisp
