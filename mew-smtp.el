@@ -424,12 +424,14 @@
 	 ;; Both GnuTLS and NSM are mandatory for 'native.
 	 ((and sslnp (or (not (fboundp 'gnutls-available-p))
 			 (not (gnutls-available-p))
+			 (not (fboundp 'gnutls-boot-parameters))
 			 (not (fboundp 'nsm-level))))
 	  (setq pro
 		(list nil
 		      :error t
 		      :status-msg
-		      (concat status-msg "FAILED (GnuTLS not available)"))))
+		      (concat status-msg
+			      "FAILED (GnuTLS or NSM not available)"))))
 	 ((and sslnp)
 	  (let ((hostname (puny-encode-domain server))
 		;; Note: on Emacs 26.3 and prior GnuTLS always uses
