@@ -83,11 +83,11 @@
     (let* ((epa-pinentry-mode 'loopback)
 	   (slist (mew-passwd-auth-source-parse-key key))
 	   (entry (apply #'auth-source-search
-			 (plist-put (nconc slist)
-				    :secret val :create t))))
-      (save-function (plist-get (nth 0 entry) :save-function)))
-    (when (functionp save-function)
-      (funcall save-function)))
+			 (append slist (list
+					:secret val :create t))))
+	   (save-function (plist-get (nth 0 entry) :save-function)))
+      (when (functionp save-function)
+	(funcall save-function))))
    (t
     ;; Authentication failed.
     ;;
