@@ -420,10 +420,11 @@
 		   (stringp port) (string-match "^/" port))
 	  (setq family 'local)
 	  (setq server 'local))
-	;; GnuTLS-specific
 	(cond
+	 ;; Both GnuTLS and NSM are mandatory for 'native.
 	 ((and sslnp (or (not (fboundp 'gnutls-available-p))
-			 (not (gnutls-available-p))))
+			 (not (gnutls-available-p))
+			 (not (fboundp 'nsm-level))))
 	  (setq pro
 		(list nil
 		      :error t
@@ -435,11 +436,6 @@
 		;; the system-wide default path first even if
 		;; trustfiles is specified.
 		(trustfiles (mew-ssl-trustfiles case))
-		;; Defer verification to NSM.  Note that
-		;; gnutls-verify-error overrides verify-error when it
-		;; is nil.  Setting gnutls-verify-error to t is
-		;; discouraged.
-		(verify-error nil)
 		(nsm-noninteractive nil)
 		(network-security-level network-security-level))
 	    (when (eq (mew-ssl-verify-level case) 0)
@@ -447,7 +443,7 @@
 	      (setq network-security-level 'low))
 	    (setq tlsparams
 		  (cons 'gnutls-x509pki
-			;; XXX (gnutls-boot-parameters) returns
+			;; XXX: (gnutls-boot-parameters) returns
 			;; :priority key instead of :priority-string
 			;; while (gnutls-negotiate) accepts
 			;; :priority-string.  To handle this odd
@@ -460,6 +456,14 @@
 				:trustfiles (mew-ssl-trustfiles case)
 				:priority-string (mew-ssl-algorithm-priority case)
 				:min-prime-bits mew-ssl-min-prime-bits
+				;;
+				;; mew-ssl-verify-error should be nil
+				;; to defer verification to NSM.  Note
+				;; that gnutls-verify-error overrides
+				;; verify-error when it is nil.
+				;; Setting gnutls-verify-error to t is
+				;; also discouraged.
+				;;
 				:verify-error mew-ssl-verify-error
 				:hostname hostname)))
 			  (plist-put boot-params
@@ -475,11 +479,11 @@
 			     (apply #'concat (mapcar (lambda (a) (format "%s " a)) tlsparams))))
 	    (let ((type (if starttlsp 'starttls 'tls)))
 	      (with-temp-message status-msg
-		;; XXX: (open-network-stream) does not pass
-		;; tlsparams to (gnutls-negotiate) to start
-		;; STARTTLS.  As a workaround, add an advice to
-		;; forcibly append the parameters.  This should be
-		;; fixed in (open-network-stream).
+		;; XXX: (open-network-stream) does not pass tlsparams
+		;; to (gnutls-negotiate) to start STARTTLS.  As a
+		;; workaround, add an advice to forcibly append the
+		;; parameters.  This should be fixed in
+		;; (open-network-stream).
 		(setq mew--advice-tls-parameters-plist (cdr tlsparams))
 		(advice-add 'gnutls-negotiate
 			    :filter-args #'mew--advice-filter-args-gnutls-negotiate)
@@ -508,8 +512,8 @@
 		(let ((plainp (eq 'plain (plist-get (cdr pro) :type)))
 		      (openp  (and (car pro)
 				   (eq 'open (process-status (car pro)))))
-		      ;; Falling back to a plain connection is
-		      ;; allowed only when verify-level < 2.
+		      ;; Falling back to a plain connection is allowed
+		      ;; only when verify-level < 2.
 		      (needtlsp (and starttlsp
 				     (> (mew-ssl-verify-level case) 1))))
 		  (cond
