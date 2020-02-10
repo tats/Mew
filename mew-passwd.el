@@ -53,22 +53,35 @@
 ;;; Functions for auth-source backend
 ;;;
 
-(autoload 'auth-source-search "'auth-source")
+(autoload 'auth-source-search "auth-source")
 
 (defun mew-passwd-use-auth-source-p ()
   (eq mew-master-passwd-type 'auth-source))
 
 (defun mew-passwd-auth-source-parse-key (key)
-  (let* ((slist (split-string key "[@:]"))
-	 (user (nth 0 slist))
-	 (host (nth 1 slist))
-	 (port (nth 2 slist)))
-    (list :user user :host host :port port)))
+  (if (string-match "\\([^@]+\\)@\\([^:]+\\):\\(.+\\)" key)
+      (list :user (match-string 1 key)
+	    :host (match-string 2 key)
+	    :port (match-string 3 key))
+    (list  :key key
+	   :user nil
+	   :host nil
+	   :port nil)))
 
+;;; XXX epa-pinentry-mode is set to 'loopback to avoid GUI pinentry
+;;; window.  This might not be a recommended way but it works.
+;;;
+;;; XXX when the backend is an encrypted file and an wrong passphrase
+;;; is provided, a password prompt will be displayed.  This may be
+;;; confusing.
 (defun mew-passwd-auth-source-get-passwd (key)
   (let* ((epa-pinentry-mode 'loopback)
 	 (slist (mew-passwd-auth-source-parse-key key))
-	 (found (apply #'auth-source-search (nconc slist))))
+	 found)
+    (condition-case error
+	(setq found (apply #'auth-source-search (nconc slist)))
+      (error
+       (setq found nil)))
     (if found
 	(let ((secret (plist-get (nth 0 found) :secret)))
 	  (if (functionp secret)
