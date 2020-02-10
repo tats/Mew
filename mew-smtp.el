@@ -447,14 +447,24 @@
 	      (setq network-security-level 'low))
 	    (setq tlsparams
 		  (cons 'gnutls-x509pki
-			(gnutls-boot-parameters
-			 :type 'gnutls-x509pki
-			 :keylist (mew-ssl-client-keycert-list case)
-			 :trustfiles (mew-ssl-trustfiles case)
-			 :priority-string (mew-ssl-algorithm-priority case)
-			 :min-prime-bits mew-ssl-min-prime-bits
-			 :verify-error mew-ssl-verify-error
-			 :hostname hostname)))
+			;; XXX (gnutls-boot-parameters) returns
+			;; :priority key instead of :priority-string
+			;; while (gnutls-negotiate) accepts
+			;; :priority-string.  To handle this odd
+			;; mismatch, create :priority-string in the
+			;; result of (gnutls-boot-parameters) here.
+			(let ((boot-params
+			       (gnutls-boot-parameters
+				:type 'gnutls-x509pki
+				:keylist (mew-ssl-client-keycert-list case)
+				:trustfiles (mew-ssl-trustfiles case)
+				:priority-string (mew-ssl-algorithm-priority case)
+				:min-prime-bits mew-ssl-min-prime-bits
+				:verify-error mew-ssl-verify-error
+				:hostname hostname)))
+			  (plist-put boot-params
+				     :priority-string
+				     (plist-get boot-params :priority)))))
 	    ;; debug output: TLS params
 	    (funcall (intern (concat "mew-" (symbol-name proto) "-debug"))
 		     (format "TLS proto=%s, server=%s:%s, starttlsp=%s"
