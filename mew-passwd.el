@@ -59,6 +59,13 @@
   (eq mew-master-passwd-type 'auth-source))
 
 (defun mew-passwd-auth-source-parse-key (key)
+  (let ((st (split-string key "[@:]")))
+    (list :user (nth 0 st)
+	  :host (nth 1 st)
+	  :port (nth 2 st))))
+
+;;; XXX will be revisited.
+(defun mew-passwd-auth-source-parse-key-x (key)
   (if (string-match "\\([^@]+\\)@\\([^:]+\\):\\(.+\\)" key)
       (list :user (match-string 1 key)
 	    :host (match-string 2 key)
@@ -78,10 +85,15 @@
   (let* ((epa-pinentry-mode 'loopback)
 	 (slist (mew-passwd-auth-source-parse-key key))
 	 found)
-    (condition-case error
-	(setq found (apply #'auth-source-search (nconc slist)))
-      (error
-       (setq found nil)))
+    (cond
+     ((member key mew-pgp-list)
+      ;; Never get GnuPG passphrase.  Rely on gpg-agent for caching.
+      (setq found nil))
+     (t
+      (condition-case error
+	  (setq found (apply #'auth-source-search (nconc slist)))
+	(error
+	 (setq found nil)))))
     (if found
 	(let ((secret (plist-get (nth 0 found) :secret)))
 	  (if (functionp secret)
@@ -91,6 +103,9 @@
 
 (defun mew-passwd-auth-source-set-passwd (key val)
   (cond
+   ((member key mew-pgp-list)
+    ;; Never store GnuPG passphrase.  Rely on gpg-agent for caching.
+    )
    (val
     ;; Authenticated successfully.
     (let* ((epa-pinentry-mode 'loopback)
