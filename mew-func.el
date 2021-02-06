@@ -1193,15 +1193,15 @@ and sets buffer-file-coding-system."
 (defun mew-start-process-lang (name buffer program &rest program-args)
   (let ((process-environment (copy-sequence process-environment)))
     (setenv "LANGUAGE" "C")
-    (setenv "LC_ALL" "C")
-    (setenv "LANG" "C")
+    (setenv "LC_ALL" "C.UTF-8")
+    (setenv "LANG" "C.UTF-8")
     (apply 'start-process name buffer program program-args)))
 
 (defun mew-call-process-lang (prog &optional infile buffer display &rest args)
   (let ((process-environment (copy-sequence process-environment)))
     (setenv "LANGUAGE" "C")
-    (setenv "LC_ALL" "C")
-    (setenv "LANG" "C")
+    (setenv "LC_ALL" "C.UTF-8")
+    (setenv "LANG" "C.UTF-8")
     (apply 'call-process prog infile buffer display args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
